@@ -79,16 +79,86 @@
         android:textSize="14sp"
         android:visibility="gone" />
 
+    <TextView
+        android:id="@+id/commandTv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/timerEt"
+        android:layout_below="@id/receivedTextTv"
+        android:layout_alignParentStart="true"
+        android:gravity="center"
+        android:text="Command   "
+        android:textSize="18sp" />
+
     <EditText
         android:id="@+id/cmdEt"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_above="@+id/buttonLayout"
+        android:layout_above="@+id/timerEt"
         android:layout_marginTop="5dp"
         android:layout_marginBottom="4dp"
         android:layout_toStartOf="@id/sendBtn"
+        android:layout_toEndOf="@id/commandTv"
         android:background="@drawable/background_border"
-        android:hint="Enter end points"
+        android:hint="Command"
+        android:paddingVertical="10dp"
+        android:paddingStart="5dp"
+        android:textSize="16sp"
+        android:visibility="visible" />
+
+    <TextView
+        android:id="@+id/timerTv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/partitionEt"
+        android:layout_below="@id/commandTv"
+        android:layout_alignParentStart="true"
+        android:gravity="center"
+        android:text="Timer           "
+        android:textSize="18sp" />
+
+    <EditText
+        android:id="@+id/timerEt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/partitionEt"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="5dp"
+        android:layout_marginBottom="4dp"
+        android:layout_toStartOf="@id/sendBtn"
+        android:layout_toEndOf="@id/timerTv"
+        android:background="@drawable/background_border"
+        android:hint="Timer (in Seconds) (Optional)"
+        android:inputType="number"
+        android:paddingVertical="10dp"
+        android:paddingStart="5dp"
+        android:textSize="16sp"
+        android:visibility="visible" />
+
+    <TextView
+        android:id="@+id/partitionTv"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/buttonLayout"
+        android:layout_below="@id/timerTv"
+        android:layout_alignParentStart="true"
+        android:gravity="center"
+        android:text="Partition By "
+        android:textSize="18sp" />
+
+    <EditText
+        android:id="@+id/partitionEt"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/buttonLayout"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="4dp"
+        android:layout_toStartOf="@id/sendBtn"
+        android:layout_toEndOf="@id/partitionTv"
+        android:background="@drawable/background_border"
+        android:hint="List Partition"
+        android:inputType="number"
         android:paddingVertical="10dp"
         android:paddingStart="5dp"
         android:textSize="16sp"
@@ -99,6 +169,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_above="@+id/buttonLayout"
+        android:layout_below="@id/receivedTextTv"
         android:layout_alignParentEnd="true"
         android:layout_marginStart="2dp"
         android:backgroundTint="@color/send_color"
@@ -107,6 +178,22 @@
         android:text="Send"
         android:textAllCaps="false"
         android:visibility="visible" />
+
+    <Button
+        android:id="@+id/applyPartitionBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/buttonLayout"
+        android:layout_below="@id/timerEt"
+        android:layout_alignParentEnd="true"
+        android:layout_marginStart="2dp"
+        android:layout_marginTop="5dp"
+        android:backgroundTint="@color/send_color"
+        android:gravity="center"
+        android:padding="10dp"
+        android:text="Apply Partition"
+        android:textAllCaps="false"
+        android:visibility="gone" />
 
     <LinearLayout
         android:id="@+id/buttonLayout"
@@ -126,7 +213,8 @@
             android:padding="10dp"
             android:text="Start"
             android:textAllCaps="false"
-            android:textSize="12sp" />
+            android:textSize="12sp"
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/stopBtn"
@@ -137,7 +225,8 @@
             android:padding="10dp"
             android:text="Stop"
             android:textAllCaps="false"
-            android:textSize="12sp" />
+            android:textSize="12sp"
+            android:visibility="gone" />
 
         <Button
             android:id="@+id/releaseBtn"
@@ -148,7 +237,8 @@
             android:padding="10dp"
             android:text="Release"
             android:textAllCaps="false"
-            android:textSize="12sp" />
+            android:textSize="12sp"
+            android:visibility="gone" />
 
 
         <Button

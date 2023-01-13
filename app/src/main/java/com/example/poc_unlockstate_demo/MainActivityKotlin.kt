@@ -36,9 +36,16 @@ class MainActivityKotlin : AppCompatActivity() {
     var stopBtn: Button? = null
     var releaseBtn: Button? = null
 
+    var timerEt: EditText? = null
+    var partitionEt: EditText? = null
+    var applyPartitionBtn: Button? = null
+
     var helper: UsbSerialCommunicationHelper? = null
     var progressDialog: ProgressDialog? = null
     var arraylist = ArrayList<String>()
+
+    //Required Variable
+    var divideBy: Int = 100
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,6 +65,7 @@ class MainActivityKotlin : AppCompatActivity() {
         clearBtn!!.setOnClickListener {
             receivedTextTv!!.text = ""
             cmdEt!!.setText("")
+            timerEt!!.setText("")
             receivedTextTv!!.text = "Size of list : ${arraylist.size}\n"
             arraylist.clear()
         }
@@ -71,13 +79,33 @@ class MainActivityKotlin : AppCompatActivity() {
                 Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
             }
         }
+
+        //set default partition
+        partitionEt!!.setText("100")
     }
 
     private fun sendCommand() {
+        arraylist.clear()
         val cmd = cmdEt!!.text.toString().trim { it <= ' ' }
+        val time = timerEt!!.text.toString().trim()
+
+        var partitionBy = partitionEt!!.text.toString().trim()
+        if (partitionBy.isNotEmpty()) {
+            divideBy = partitionBy.toInt()
+            Toast.makeText(this, "Applied Partition", Toast.LENGTH_SHORT).show()
+        } else {
+            divideBy = 100
+        }
+
         if (!TextUtils.isEmpty(cmd)) {
             receivedTextTv!!.append("----------------------\nSend : $cmd\n")
-            helper!!.onSendCommand(cmd)
+            if (time.isNotEmpty()) {
+                helper!!.onSendCustomCommand(cmd, time.toInt())
+            } else {
+                helper!!.onSendCommand(cmd)
+            }
+
+
         } else {
             Toast.makeText(this, "Please enter command...", Toast.LENGTH_SHORT).show()
         }
@@ -117,7 +145,7 @@ class MainActivityKotlin : AppCompatActivity() {
                 if (progressDialog!!.isShowing) progressDialog!!.dismiss()
                 Log.w(TAG, "Activity : $data")
                 arraylist.add(data)
-                if (arraylist.size % 100 == 0) {
+                if (arraylist.size % divideBy == 0) {
                     runOnUiThread { receivedTextTv!!.append("Received : $data : Size of List : ${arraylist.size}\n") }
                 }
                 //runOnUiThread { receivedTextTv!!.append("Received : $data\n") }
@@ -185,6 +213,10 @@ class MainActivityKotlin : AppCompatActivity() {
         startBtn = findViewById(R.id.startBtn)
         stopBtn = findViewById(R.id.stopBtn)
         releaseBtn = findViewById(R.id.releaseBtn)
+
+        timerEt = findViewById(R.id.timerEt)
+        partitionEt = findViewById(R.id.partitionEt)
+        applyPartitionBtn = findViewById(R.id.applyPartitionBtn)
 
         progressDialog = ProgressDialog(this)
         progressDialog!!.setTitle("Please wait")

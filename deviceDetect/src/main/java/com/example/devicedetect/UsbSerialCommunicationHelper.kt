@@ -99,11 +99,14 @@ class UsbSerialCommunicationHelper private constructor(private var context: Cont
         var device: UsbDevice? = null
         val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
         for (v in usbManager.deviceList.values) {
+            Log.e("DevicesCount List", "connect: " + v.vendorId)
             if (v.vendorId == ConstantHelper.spandanVendorId
                 || v.vendorId == ConstantHelper.spandanVendorId1
                 || v.vendorId == ConstantHelper.spandanVendorId2
             ) {
                 device = v
+                Log.e("DevicesCount Catch", "connect: " + device.vendorId)
+                break;
             }
         }
 
@@ -147,7 +150,144 @@ class UsbSerialCommunicationHelper private constructor(private var context: Cont
     }
 
     private fun findInterfaceAndEndpointOfDevice(device: UsbDevice) {
-        //OPEN SINGLE INTERFACE
+        try {
+            //OPEN SINGLE INTERFACE
+            if (device.vendorId == ConstantHelper.spandanVendorId1) {
+                mControlInterface = device.getInterface(0)
+                mDataInterface = device.getInterface(0)
+                if (!mConnection!!.claimInterface(mControlInterface, true)) {
+                    Log.w(
+                        TAG,
+                        "findInterfaceOfDevice: Could not claim shared control/data interface"
+                    )
+                    showToast("Could not claim shared control/data interface")
+                }
+                for (i in 0 until mControlInterface!!.endpointCount) {
+                    val ep = mControlInterface!!.getEndpoint(i)
+                    Log.w(TAG, "findInterfaceOfDevice: $ep")
+                    if (ep.direction == UsbConstants.USB_DIR_IN && ep.type == UsbConstants.USB_ENDPOINT_XFER_INT) {
+                        mControlEndpoint = ep
+                    } else if (ep.direction == UsbConstants.USB_DIR_IN && ep.type == UsbConstants.USB_ENDPOINT_XFER_BULK) {
+                        mReadEndpoint = ep
+                    } else if (ep.direction == UsbConstants.USB_DIR_OUT && ep.type == UsbConstants.USB_ENDPOINT_XFER_BULK) {
+                        mWriteEndpoint = ep
+                    }
+                }
+                if (mControlEndpoint == null) {
+                    Log.e(TAG, "findInterfaceOfDevice: No control endpoint")
+                    showToast("No Control Endpoint")
+                } else {
+                    Log.w(TAG, "findInterfaceOfDevice: $mControlEndpoint")
+                }
+
+            }
+            //OPEN MULTIPLE INTERFACE POINT
+            else {
+                //Open interface for find required interface and endpoint
+                Log.d(TAG, "claiming interfaces, count=" + device.interfaceCount)
+                var controlInterfaceCount = 0
+                var dataInterfaceCount = 0
+                mControlInterface = null
+                mDataInterface = null
+                for (i in 0 until device.interfaceCount) {
+                    val usbInterface = device.getInterface(i)
+                    if (usbInterface.interfaceClass == UsbConstants.USB_CLASS_COMM) {
+                        if (controlInterfaceCount == 0) {
+                            mControlIndex = i
+                            mControlInterface = usbInterface
+                        }
+                        controlInterfaceCount++
+                    }
+                    if (usbInterface.interfaceClass == UsbConstants.USB_CLASS_CDC_DATA) {
+                        if (dataInterfaceCount == 0) {
+                            mDataInterface = usbInterface
+                        }
+                        dataInterfaceCount++
+                    }
+                }
+                if (mControlInterface == null) {
+                    Log.w(TAG, "findInterfaceOfDevice: No control interface")
+                    showToast("No control interface")
+                }
+                Log.d(TAG, "Control iface=$mControlInterface")
+                if (!mConnection!!.claimInterface(mControlInterface, true)) {
+                    Log.w(TAG, "findInterfaceOfDevice: Could not claim control interface")
+                    showToast("Could not claim control interface")
+                }
+                mControlEndpoint = mControlInterface!!.getEndpoint(0)
+                if (mControlEndpoint!!.direction != UsbConstants.USB_DIR_IN || mControlEndpoint!!.type != UsbConstants.USB_ENDPOINT_XFER_INT) {
+                    Log.w(TAG, "findInterfaceOfDevice: Invalid control endpoint")
+                    showToast("Invalid control endpoint")
+                }
+                if (mDataInterface == null) {
+                    Log.w(TAG, "findInterfaceOfDevice: No data interface")
+                    showToast("No data interface")
+                }
+                Log.d(TAG, "data iface=$mDataInterface")
+                if (!mConnection!!.claimInterface(mDataInterface, true)) {
+                    Log.w(TAG, "findInterfaceOfDevice: Could not claim data interface")
+                    showToast("Could not claim data interface")
+                }
+                for (i in 0 until mDataInterface!!.endpointCount) {
+                    val ep = mDataInterface!!.getEndpoint(i)
+                    if (ep.direction == UsbConstants.USB_DIR_IN && ep.type == UsbConstants.USB_ENDPOINT_XFER_BULK) mReadEndpoint =
+                        ep
+                    if (ep.direction == UsbConstants.USB_DIR_OUT && ep.type == UsbConstants.USB_ENDPOINT_XFER_BULK) mWriteEndpoint =
+                        ep
+                }
+                if (mReadEndpoint == null || mWriteEndpoint == null) {
+                    Log.e(TAG, "Could not get read & write endpoints")
+                    showToast("Could not get read and write endpoint")
+                } else {
+                    //Log.w(
+                    //TAG,
+                    //"findInterfaceOfDevice: \nReadEndPoint$mReadEndpoint \nWriteEndPoint $mWriteEndpoint"
+                    //)
+                }
+            }
+
+            //allocate size of read endpoint
+            mReadBuffer = ByteBuffer.allocate(mReadEndpoint!!.maxPacketSize)
+            mUsbRequest = UsbRequest()
+            mUsbRequest!!.initialize(mConnection, mReadEndpoint)
+
+            //it will work when we have single interface
+            val baudRate = ConstantHelper.BAUD_RATE
+            val dataBits = 8
+            val stopBitsByte: Byte = 1
+            val parityBitesByte: Byte = 0
+            val setLineCoding = 0x20
+            val USB_RT_ACM = UsbConstants.USB_TYPE_CLASS or 0x01
+            val buf = byteArrayOf(
+                (baudRate and 0xff).toByte(),
+                (baudRate shr 8 and 0xff).toByte(),
+                (baudRate shr 16 and 0xff).toByte(),
+                (baudRate shr 24 and 0xff).toByte(),
+                stopBitsByte,
+                parityBitesByte,
+                dataBits.toByte()
+            )
+
+            //sendAcmControlMessage(setLineCoding, 0, msg);
+            val len = mConnection!!.controlTransfer(
+                USB_RT_ACM,
+                setLineCoding,
+                0,
+                mControlIndex,
+                buf,
+                buf.size,
+                5000
+            )
+            if (len < 0) {
+                Log.w(TAG, "findInterfaceOfDevice: controlTransfer failed")
+                showToast("Control transfer failed")
+            }
+
+            launchCoroutine()
+        } catch (e: Exception) {
+            showToast(e.toString())
+        }
+        /*//OPEN SINGLE INTERFACE
         if (device.vendorId == ConstantHelper.spandanVendorId1) {
             mControlInterface = device.getInterface(0)
             mDataInterface = device.getInterface(0)
@@ -276,7 +416,7 @@ class UsbSerialCommunicationHelper private constructor(private var context: Cont
             showToast("Control transfer failed")
         }
 
-        launchCoroutine()
+        launchCoroutine()*/
         //verifyDevice();
     }
 
@@ -377,6 +517,28 @@ class UsbSerialCommunicationHelper private constructor(private var context: Cont
         } catch (e: Exception) {
             usbHelperListener!!.onConnectionError(e.toString())
             Log.e(TAG, "send: Write method : " + e.message)
+        }
+    }
+
+    private fun sendCustomCommand(str: String, time: Int) {
+        if (mConnection == null) {
+            Log.d(TAG, "Device disconnected...")
+            showToast("Device Disconnected...")
+            return
+        } else {
+            counter = 0
+            val thread = Thread {
+                command = ConstantHelper.START_KEY
+                send(command)
+                try {
+                    Thread.sleep((time * 1000).toLong())
+                } catch (e: InterruptedException) {
+                    e.printStackTrace()
+                }
+                command = ConstantHelper.STOP_KEY
+                send(command)
+            }
+            thread.start()
         }
     }
 
@@ -590,6 +752,10 @@ class UsbSerialCommunicationHelper private constructor(private var context: Cont
             else -> cmd
         }
         send(command)
+    }
+
+    fun onSendCustomCommand(cmd: String, timer: Int) {
+        sendCustomCommand(cmd, timer);
     }
 
     fun onStartTransmission() {
