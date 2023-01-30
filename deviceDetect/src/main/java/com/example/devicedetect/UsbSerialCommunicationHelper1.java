@@ -280,7 +280,7 @@ public class UsbSerialCommunicationHelper1 implements Runnable {
         UsbDevice device = null;
         UsbManager usbManager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
         for (UsbDevice v : usbManager.getDeviceList().values())
-            if (v.getVendorId() == ConstantHelper.spandanVendorId || v.getVendorId() == ConstantHelper.spandanVendorId1)
+            if (v.getVendorId() == ConstantHelper.spandanVendorId || v.getVendorId() == ConstantHelper.spandanVendorId1 || v.getVendorId() == ConstantHelper.spandanVendorId2)
                 device = v;
 
         if (device == null) {
@@ -383,8 +383,7 @@ public class UsbSerialCommunicationHelper1 implements Runnable {
                 } else {
                     Log.w(TAG, "findInterfaceOfDevice: " + mControlEndpoint);
                 }
-            }
-            else {
+            } else {
                 //Open interface for find required interface and endpoint
                 Log.d(TAG, "claiming interfaces, count=" + device.getInterfaceCount());
                 int controlInterfaceCount = 0;
