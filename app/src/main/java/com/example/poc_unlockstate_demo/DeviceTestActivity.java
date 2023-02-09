@@ -1,14 +1,5 @@
 package com.example.poc_unlockstate_demo;
 
-import androidx.activity.result.ActivityResultCallback;
-import androidx.activity.result.ActivityResultLauncher;
-import androidx.activity.result.contract.ActivityResultContracts;
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
-
-import android.Manifest;
-import android.content.ActivityNotFoundException;
-import android.content.ComponentName;
 import android.content.Intent;
 import android.content.res.ColorStateList;
 import android.hardware.usb.UsbManager;
@@ -24,6 +15,8 @@ import android.view.WindowManager;
 import android.webkit.MimeTypeMap;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.example.devicedetect.UsbHelperListener;
 import com.example.devicedetect.UsbSerialCommunicationHelper;
 import com.example.poc_unlockstate_demo.databinding.ActivityDeviceTestBinding;
@@ -32,9 +25,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class DeviceTestActivity extends AppCompatActivity {
 

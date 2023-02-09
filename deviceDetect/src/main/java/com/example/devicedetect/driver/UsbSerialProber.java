@@ -42,7 +42,8 @@ public class UsbSerialProber {
             try {
                 final Constructor<? extends UsbSerialDriver> ctor = driverClass.getConstructor(UsbDevice.class);
                 driver = ctor.newInstance(usbDevice);
-            } catch (NoSuchMethodException | IllegalArgumentException | InstantiationException | IllegalAccessException | InvocationTargetException e) {
+            } catch (NoSuchMethodException | IllegalArgumentException | InstantiationException |
+                     IllegalAccessException | InvocationTargetException e) {
                 throw new RuntimeException(e);
             }
             return driver;

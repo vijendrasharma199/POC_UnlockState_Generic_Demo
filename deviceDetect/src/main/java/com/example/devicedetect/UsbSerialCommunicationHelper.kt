@@ -22,7 +22,7 @@ import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 import kotlin.math.max
 
-class UsbSerialCommunicationHelper private constructor(private var context: Context) {
+class UsbSerialCommunicationHelper private constructor(private var context: Application) {
 
     enum class UsbPermission {
         Unknown, Requested, Granted
@@ -179,7 +179,6 @@ class UsbSerialCommunicationHelper private constructor(private var context: Cont
                 if (!connection.claimInterface(mControlInterface, true)) {
                     Log.w(TAG, "findInterfaceOfDevice: Could not claim data interface")
                     //showToast("Could not claim data interface")
-                    //TODO Error Notify
                     usbHelperListener.onConnectionError("Could not claim data interface")
                     return
                 }
@@ -194,7 +193,6 @@ class UsbSerialCommunicationHelper private constructor(private var context: Cont
                                 ep
                         }
                     } else {
-                        //TODO Error Notify
                         Log.e(TAG, "Control Interface is null")
                         usbHelperListener.onConnectionError("Control Interface is null")
                     }
@@ -241,6 +239,7 @@ class UsbSerialCommunicationHelper private constructor(private var context: Cont
                     0x00,//Parity Bits
                     0x08//Data Bits
                 )
+
 
                 val result: Int
                 if (device.vendorId == ConstantHelper.spandanVendorId) {
@@ -642,7 +641,8 @@ class UsbSerialCommunicationHelper private constructor(private var context: Cont
         @JvmStatic
         fun getInstance(context: Context): UsbSerialCommunicationHelper? {
             if (usbSerialCommunicationHelper == null) {
-                usbSerialCommunicationHelper = UsbSerialCommunicationHelper(context)
+                usbSerialCommunicationHelper =
+                    UsbSerialCommunicationHelper(context.applicationContext as Application)
             }
             return usbSerialCommunicationHelper
         }

@@ -1,22 +1,16 @@
 package com.example.poc_unlockstate_demo
 
-import android.app.ProgressDialog
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.hardware.usb.UsbManager
 import android.os.Bundle
-import android.text.SpannableStringBuilder
 import android.text.TextUtils
 import android.text.method.ScrollingMovementMethod
 import android.util.Log
-import android.widget.Button
-import android.widget.EditText
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import androidx.databinding.DataBindingUtil
 import com.example.devicedetect.UsbHelperListener
-import com.example.devicedetect.UsbSerialCommunicationHelper
+import com.example.devicedetect.customClass.MainUsbSerialHelper
 import com.example.poc_unlockstate_demo.databinding.ActivityMainKotlinBinding
 import java.math.BigInteger
 import java.nio.charset.StandardCharsets
@@ -30,12 +24,14 @@ class MainActivityKotlin : AppCompatActivity() {
     lateinit var binding: ActivityMainKotlinBinding
 
     //Module Variables
-    var helper: UsbSerialCommunicationHelper? = null
-    var progressDialog: ProgressDialog? = null
+    //var helper: UsbSerialCommunicationHelper? = null
+    //var helper: UsbSerialHelperCustom? = null
+    var helper: MainUsbSerialHelper? = null
     var arraylist = ArrayList<String>()
 
     //Required Variable
     var divideBy: Int = 100
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainKotlinBinding.inflate(layoutInflater)
@@ -60,11 +56,12 @@ class MainActivityKotlin : AppCompatActivity() {
             arraylist.clear()
         }
 
-        binding.startBtn.setOnClickListener { helper!!.onStartTransmission() }
-        binding.stopBtn.setOnClickListener { helper!!.onStopTransmission() }
+        binding.startBtn.setOnClickListener { MainUsbSerialHelper.onStartTransmission() }
+        binding.stopBtn.setOnClickListener { MainUsbSerialHelper.onStopTransmission() }
         binding.releaseBtn.setOnClickListener {
             try {
-                helper!!.removeInstance()
+                //helper!!.removeInstance()
+                MainUsbSerialHelper.removeInstance()
             } catch (e: Exception) {
                 showToast(e.toString())
             }
@@ -89,9 +86,11 @@ class MainActivityKotlin : AppCompatActivity() {
         if (!TextUtils.isEmpty(cmd)) {
             binding.receivedTextTv.append("----------------------\nSend : $cmd\n")
             if (time.isNotEmpty()) {
-                helper!!.onSendCustomCommand(cmd, time.toInt())
+                //helper!!.onSendCustomCommand(cmd, time.toInt())
+                MainUsbSerialHelper.onSendCustomCommand(cmd, time.toInt())
             } else {
-                helper!!.onSendCommand(cmd)
+                //helper!!.onSendCommand(cmd)
+                MainUsbSerialHelper.onSendCommand(cmd)
             }
         } else {
             showToast("Please enter command...")
@@ -106,7 +105,7 @@ class MainActivityKotlin : AppCompatActivity() {
     private fun useModule(message: String) {
         arraylist.clear()
         Log.d(TAG, "Activity Module Call : $message")
-        helper!!.setCommunication(object : UsbHelperListener {
+        /*helper!!.setCommunication(object : UsbHelperListener {
             override fun onDeviceConnect() {
                 progressDialog!!.setMessage("Connecting...")
                 Log.d(TAG, "Activity : Device Connected...")
@@ -159,8 +158,60 @@ class MainActivityKotlin : AppCompatActivity() {
                 runOnUiThread { binding.receivedTextTv.append("$errorMessage\n") }
             }
         })
+
         binding.startBtn.setOnClickListener { helper!!.onStartTransmission() }
-        binding.stopBtn.setOnClickListener { helper!!.onStopTransmission() }
+        binding.stopBtn.setOnClickListener { helper!!.onStopTransmission() }*/
+
+        MainUsbSerialHelper.setCommunication(this, object : UsbHelperListener {
+            override fun onDeviceConnect() {
+                Log.d(TAG, "Activity : Device Connected...")
+                binding.receivedTextTv.append("Device Connected....\n")
+                binding.deviceStatusTv.text = "Device Connected..."
+                binding.deviceStatusTv.backgroundTintList =
+                    ColorStateList.valueOf(resources.getColor(R.color.verify_color))
+            }
+
+            override fun onDeviceVerified(isVerified: Boolean) {
+                Log.d(TAG, "Activity : Device Verified...")
+                binding.receivedTextTv.append("Received : Device ready for communication\n")
+                binding.deviceStatusTv.text = "Device Verified..."
+                binding.deviceStatusTv.backgroundTintList =
+                    ColorStateList.valueOf(resources.getColor(R.color.start_color))
+            }
+
+            override fun onTransmission(data: String) {
+                Log.w(TAG, "Activity : $data")
+                arraylist.add(data)
+                if (arraylist.size % divideBy == 0) {
+                    var size = arraylist.size
+                    runOnUiThread { binding.receivedTextTv.append("Received : $data : Size of List : $size\n") }
+                }
+                //runOnUiThread { binding.receivedTextTv.setText("Received : $data : Size of List : ${arraylist.size}\n") }
+                //runOnUiThread { binding.receivedTextTv.setText("Received : $data\n") }
+                //runOnUiThread { binding.receivedTextTv.setText("Received : ${SpannableStringBuilder(data)}\n") }
+            }
+
+            override fun onDeviceDisconnect() {
+                Log.d(TAG, "Activity : Device Disconnected")
+                binding.receivedTextTv.append("Device disconnected or transmission stopped.....\n")
+                binding.deviceStatusTv.text = "Device Disconnected..."
+                binding.deviceStatusTv.backgroundTintList =
+                    ColorStateList.valueOf(resources.getColor(R.color.stop_color))
+
+                runOnUiThread { binding.receivedTextTv.append("Size of List : ${arraylist.size}\n") }
+            }
+
+            override fun onConnectionError(errorMessage: String?) {
+                Log.e(TAG, "onConnectionError: $errorMessage")
+                binding.deviceStatusTv.text = "Device Error..."
+                binding.deviceStatusTv.backgroundTintList =
+                    ColorStateList.valueOf(resources.getColor(R.color.stop_color))
+                runOnUiThread { binding.receivedTextTv.append("$errorMessage\n") }
+            }
+        })
+        binding.startBtn.setOnClickListener { MainUsbSerialHelper.onStartTransmission() }
+        binding.stopBtn.setOnClickListener { MainUsbSerialHelper.onStopTransmission() }
+
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -191,12 +242,8 @@ class MainActivityKotlin : AppCompatActivity() {
 
     private fun initialization() {
         binding.receivedTextTv.movementMethod = ScrollingMovementMethod()
-
-        progressDialog = ProgressDialog(this)
-        progressDialog!!.setTitle("Please wait")
-        progressDialog!!.setCanceledOnTouchOutside(false)
-
-        //helper = UsbSerialCommunicationHelper.getInstance(this, )
-        helper = UsbSerialCommunicationHelper.getInstance(this)
+        //helper = UsbSerialCommunicationHelper.getInstance(this)
+        //helper = UsbSerialHelperCustom.getInstance(this)
+        //UsbSerialHelperObject.getInstance(this)
     }
 }
