@@ -1,9 +1,8 @@
-package com.example.devicedetect.customClass
+package com.example.devicedetect
 
 import android.text.SpannableStringBuilder
 import android.util.Log
-import com.example.devicedetect.UsbHelperListener
-import com.example.devicedetect.customClass.Util.ConstantHelperCustom
+import com.example.devicedetect.Util.ConstantHelper
 import kotlinx.coroutines.*
 import java.nio.ByteBuffer
 
@@ -79,7 +78,7 @@ class UsbSerialIOManager(
                             mReadBuffer.let { readBuffer ->
                                 if (readBuffer != null) {
                                     val buffer: ByteArray? = readBuffer.array()
-                                    val len = usbSerialIOOperation.read(buffer, 0)
+                                    val len = usbSerialIOOperation.read(buffer)
                                     if (len > 0) {
                                         val data = ByteArray(len)
                                         System.arraycopy(buffer, 0, data, 0, len)
@@ -99,12 +98,13 @@ class UsbSerialIOManager(
                         }
                     } catch (e: Exception) {
                         Log.w(TAG, "Run ending due to exception: " + e.message)
-                        //usbHelperListener.onConnectionError("Run ending due to exception: " + e.message)
+                        //mUsbListener.onConnectionError("Run ending due to exception: " + e.message)
+                        //MainUsbSerialHelper.disconnect()
                     }
                 }
             } else {
                 Log.e(TAG, "launchCoroutine: Coroutine Job is null")
-                mUsbListener.onConnectionError("Coroutine job is null")
+                mUsbListener.onConnectionError("${ConstantHelper.ErrorCode.DATA} : Coroutine job is null")
             }
         }
     }
@@ -124,19 +124,18 @@ class UsbSerialIOManager(
 
         //APPLY FILTER WITH DELIMITER
         stringBuilder.append(spn)
-        if (stringBuilder.isNotEmpty() || stringBuilder.toString()
-                .contains(ConstantHelperCustom.DELIMITER)
+        if (stringBuilder.isNotEmpty() || (stringBuilder.toString()
+                .contains(ConstantHelper.DELIMITER))
         ) {
-            val result =
-                stringBuilder.toString().split(ConstantHelperCustom.DELIMITER).toTypedArray()
+            val result = stringBuilder.toString().split(ConstantHelper.DELIMITER).toTypedArray()
             val lastElementOfResult = result[result.size - 1]
             val lastElementOfBuilder = stringBuilder.substring(
-                stringBuilder.lastIndexOf(ConstantHelperCustom.DELIMITER) + 1, stringBuilder.length
+                stringBuilder.lastIndexOf(ConstantHelper.DELIMITER) + 1, stringBuilder.length
             )
             if (lastElementOfResult == lastElementOfBuilder) {
                 returnFilteredData(result, 0, result.size - 1, cmd)
                 stringBuilder.delete(
-                    0, stringBuilder.lastIndexOf(ConstantHelperCustom.DELIMITER) + 1
+                    0, stringBuilder.lastIndexOf(ConstantHelper.DELIMITER) + 1
                 )
             } else {
                 returnFilteredData(result, 0, result.size, cmd)

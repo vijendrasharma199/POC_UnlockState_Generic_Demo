@@ -17,24 +17,21 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.devicedetect.MainUsbSerialHelper;
 import com.example.devicedetect.UsbHelperListener;
-import com.example.devicedetect.UsbSerialCommunicationHelper;
 import com.example.poc_unlockstate_demo.databinding.ActivityDeviceTestBinding;
 
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Map;
 
 public class DeviceTestActivity extends AppCompatActivity {
 
     private ActivityDeviceTestBinding binding;
     private static final String TAG = "DEVICE_TESTING_TAG";
-    private UsbSerialCommunicationHelper helper;
     private final ArrayList<String> mainList = new ArrayList<>();
-    private Map<Integer, String> testListMap;
-    private int testArray[];
+    private int[] testArray;
     private int divideBy = 100;
 
     //Required Variables
@@ -86,14 +83,6 @@ public class DeviceTestActivity extends AppCompatActivity {
         divideBy = Integer.parseInt(partitionBy);
         mainList.clear();
 
-        //testArray = new int[]{1, 10, 30, 60};
-        /*testArray = new int[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 1};
-        testArray = new int[]{5, 5, 5, 5, 5, 5, 5, 5, 5, 5};
-        testArray = new int[]{10, 10, 10, 10, 10, 10, 10, 10, 10, 10};
-        testArray = new int[]{30, 30, 30, 30, 30};
-        testArray = new int[]{60, 60, 60, 60, 60};
-        testArray = new int[]{300, 300, 300, 300, 300};*/
-
         testArray = new int[]{1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 30, 30, 30, 30, 30, 60, 60, 60, 60, 60, 300, 300, 300, 300, 300};
 
         if (fileName.isEmpty()) {
@@ -107,14 +96,6 @@ public class DeviceTestActivity extends AppCompatActivity {
                     binding.liveReceivedTextTv.setVisibility(View.VISIBLE);
                     binding.receivedTextTv.append("Test started...\n");
                 });
-
-                /*// TreeMap to store values of testListMap
-                TreeMap<Integer, String> sorted = new TreeMap<>(testListMap);
-                // using for-each loop for iteration over sorted.entrySet()
-                int i = 1;
-                for (Map.Entry<Integer, String> entry : sorted.entrySet()) {
-                    performTest(entry.getKey(), entry.getKey() + "s", fileName, i++);
-                }*/
 
                 for (int testNo = 0; testNo < testArray.length; testNo++) {
                     performTest(testArray[testNo], testArray[testNo] + "S", fileName, testNo + 1);
@@ -148,7 +129,7 @@ public class DeviceTestActivity extends AppCompatActivity {
     }
 
     private String getMimeType(String url) {
-        String parts[] = url.split("\\.");
+        String[] parts = url.split("\\.");
         String extension = parts[parts.length - 1];
         String type = null;
         if (extension != null) {
@@ -159,73 +140,53 @@ public class DeviceTestActivity extends AppCompatActivity {
     }
 
     private void performTest(int timerInSeconds, String testName, String fileName, int i) {
-        /*ArrayList<String> list = new ArrayList<>();
-        if (testName.equals("1S")) {
-            list = oneSecondResultList;
-        } else if (testName.equals("10S")) {
-            list = tenSecondResultList;
-        } else if (testName.equals("30S")) {
-            list = thirtySecondResultList;
-        } else if (testName.equals("60S")) {
-            list = sixtySecondResultList;
-        } else if (testName.equals("5M")) {
-            list = fiveMinuteResultList;
-        } else if (testName.equals("10M")) {
-            list = tenMinuteResultList;
-        }*/
 
-        //First Solution
-        if (helper != null) {
+        String directoryPath = "";
+        try {
+            //create the directory
+            directoryPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/Test Folder/" + fileName.replace(" ", "_") + "/";
+            File file = new File(directoryPath);
+            if (!file.exists()) {
+                Log.e(TAG, "Directory does not exist, create it");
+                file.mkdirs();
+            }
 
-            String directoryPath = "";
+            if (file.exists()) {
+                Log.w(TAG, "Directory created");
+            }
+        } catch (Exception e) {
+            runOnUiThread(() -> showToast(e.toString()));
+        }
+
+        String finalDirectoryPath = directoryPath;
+        Thread thread = new Thread(() -> {
+            //helper.startTransmission("1");
+            MainUsbSerialHelper.sendCommand("1");
+
+            runOnUiThread(() -> binding.receivedTextTv.append(Html.fromHtml(String.format("<br/><b>%d</b> test running out of <b>%d</b> with Duration of <b>%d</b> seconds.<br/>", i, testArray.length, timerInSeconds))));
+            Log.i(TAG, i + " test running out of " + testArray.length + "\nDuration : " + timerInSeconds + "seconds.\n");
+
             try {
-                //create the directory
-                directoryPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath() + "/Test Folder/" + fileName.replace(" ", "_") + "/";
-                File file = new File(directoryPath);
-                if (!file.exists()) {
-                    Log.e(TAG, "Directory does not exist, create it");
-                    file.mkdirs();
-                }
-
-                if (file.exists()) {
-                    Log.w(TAG, "Directory created");
-                }
+                Thread.sleep(timerInSeconds * 1000L);
             } catch (Exception e) {
-                runOnUiThread(() -> showToast(e.toString()));
+                Log.e(TAG, "run: " + e);
+                showToast(e.toString());
             }
+            MainUsbSerialHelper.sendCommand("0");
 
+            int size = mainList.size();
+            runOnUiThread(() -> binding.receivedTextTv.append(Html.fromHtml(String.format("<b>%s</b> test finished<br/>Last Data : <b>%s</b><br/>Size of List : <b>%d</b><br/>", testName, mainList.get(size - 1), size))));
+            Log.i(TAG, testName + " test finished.\nLast Data : " + mainList.get(size - 1) + "\nSize of List : " + size);
 
-            String finalDirectoryPath = directoryPath;
-            Thread thread = new Thread(() -> {
-                helper.startTransmission("1");
-
-                //runOnUiThread(() -> binding.receivedTextTv.append(Html.fromHtml(String.format("<br/> <b>%d</b> test running out of <b>%d</b> with Duration of <b>%d</b> seconds.<br/>", i, testListMap.size(), timerInSeconds))));
-                runOnUiThread(() -> binding.receivedTextTv.append(Html.fromHtml(String.format("<br/><b>%d</b> test running out of <b>%d</b> with Duration of <b>%d</b> seconds.<br/>", i, testArray.length, timerInSeconds))));
-                //Log.i(TAG, i + " test running out of " + testListMap.size() + "\nDuration : " + timerInSeconds + "seconds.\n");
-                Log.i(TAG, i + " test running out of " + testArray.length + "\nDuration : " + timerInSeconds + "seconds.\n");
-
-                try {
-                    Thread.sleep(timerInSeconds * 1000L);
-                } catch (Exception e) {
-                    Log.e(TAG, "run: " + e);
-                    showToast(e.toString());
-                }
-                helper.stopTransmission("0");
-
-                int size = mainList.size();
-                runOnUiThread(() -> binding.receivedTextTv.append(Html.fromHtml(String.format("<b>%s</b> test finished<br/>Last Data : <b>%s</b><br/>Size of List : <b>%d</b><br/>", testName, mainList.get(size - 1), size))));
-                Log.i(TAG, testName + " test finished.\nLast Data : " + mainList.get(size - 1) + "\nSize of List : " + size);
-
-                //save data to file
-                saveDataToFile(finalDirectoryPath, fileName.replace(" ", "_") + "_" + testName, testName);
-            });
-            thread.start();
-            try {
-                thread.join();
-            } catch (InterruptedException e) {
-                Log.i("PERFORM_TEST", "performTest: " + e);
-                throw new RuntimeException(e);
-            }
+            //save data to file
+            saveDataToFile(finalDirectoryPath, fileName.replace(" ", "_") + "_" + testName, testName);
+        });
+        thread.start();
+        try {
+            thread.join();
+        } catch (InterruptedException e) {
+            Log.i("PERFORM_TEST", "performTest: " + e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -276,7 +237,7 @@ public class DeviceTestActivity extends AppCompatActivity {
     }
 
     private void useModule() {
-        helper.setCommunication(new UsbHelperListener() {
+        MainUsbSerialHelper.setDeviceCallback(new UsbHelperListener() {
             @Override
             public void onDeviceConnect() {
                 Log.d(TAG, "Activity : Device Connected...");
@@ -286,7 +247,7 @@ public class DeviceTestActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onDeviceVerified(boolean isVerified) {
+            public void onDeviceVerified() {
                 Log.d(TAG, "Activity : Device Verified...");
                 binding.receivedTextTv.append("Received : Device ready for communication\n");
                 binding.deviceStatusTv.setText("Device Verified...");
@@ -294,13 +255,13 @@ public class DeviceTestActivity extends AppCompatActivity {
             }
 
             @Override
-            public void onTransmission(String data) {
+            public void onReceivedData(String data) {
                 Log.w(TAG, "Activity : " + data);
                 mainList.add(data);
-                /*if (mainList.size() % divideBy == 0) {
-                    int size = mainList.size();
-                    runOnUiThread(() -> binding.receivedTextTv.append("Received : " + data + " : Size of List : " + size + "\n"));
-                }*/
+                //if (mainList.size() % divideBy == 0) {
+                //  int size = mainList.size();
+                //  runOnUiThread(() -> binding.receivedTextTv.append("Received : " + data + " : Size of List : " + size + "\n"));
+                //}
                 int size = mainList.size();
                 runOnUiThread(() -> binding.liveReceivedTextTv.setText("Received : " + data + " : Size of List : " + size));
             }
@@ -328,9 +289,6 @@ public class DeviceTestActivity extends AppCompatActivity {
     }
 
     private void initialization() {
-        //get instance of UsbSerialCommunicationHelper to use module
-        helper = UsbSerialCommunicationHelper.getInstance(this);
-
         //set scroll event to receivedText
         binding.receivedTextTv.setMovementMethod(new ScrollingMovementMethod());
 
@@ -340,15 +298,5 @@ public class DeviceTestActivity extends AppCompatActivity {
         //disable stop button
         binding.stopBtn.setEnabled(false);
         binding.stopBtn.setAlpha(0.5f);
-
-        /*//add test in list
-        testListMap = new HashMap<>();
-        testListMap.put(1, "1S");
-        testListMap.put(10, "10S");
-        testListMap.put(30, "30S");
-        testListMap.put(60, "60S");
-        //testListMap.put(300, "5M");
-        //testListMap.put(600, "10M");*/
-
     }
 }

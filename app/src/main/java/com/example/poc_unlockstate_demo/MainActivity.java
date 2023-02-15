@@ -15,8 +15,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.example.devicedetect.MainUsbSerialHelper;
 import com.example.devicedetect.UsbHelperListener;
-import com.example.devicedetect.UsbSerialCommunicationHelper1;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -30,8 +30,6 @@ public class MainActivity extends AppCompatActivity {
     TextView deviceStatusTv, receivedTextTv, outputTv;
     EditText cmdEt, inputEt;
     Button convertBtn, sendBtn, clearBtn, startBtn, stopBtn, releaseBtn;
-
-    UsbSerialCommunicationHelper1 helper;
     ProgressDialog progressDialog;
 
     @Override
@@ -55,11 +53,12 @@ public class MainActivity extends AppCompatActivity {
             cmdEt.setText("");
         });
 
-        startBtn.setOnClickListener(v -> helper.onStartTransmission());
-        stopBtn.setOnClickListener(v -> helper.onStartTransmission());
+        //startBtn.setOnClickListener(v -> helper.onStartTransmission());
+        //stopBtn.setOnClickListener(v -> helper.onStartTransmission());
         releaseBtn.setOnClickListener(v -> {
             try {
-                helper.removeInstance();
+                //helper.removeInstance();
+                MainUsbSerialHelper.clearInstance();
             } catch (Exception e) {
                 Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
             }
@@ -70,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
         String cmd = cmdEt.getText().toString().trim();
         if (!TextUtils.isEmpty(cmd)) {
             receivedTextTv.append("----------------------\nSend : " + cmd + "\n");
-            helper.onSendCommand(cmd);
+            MainUsbSerialHelper.sendCommand(cmd);
         } else {
             Toast.makeText(this, "Please enter command...", Toast.LENGTH_SHORT).show();
         }
@@ -87,52 +86,32 @@ public class MainActivity extends AppCompatActivity {
         //progressDialog.show();
         Log.d(TAG, "Activity Module Call : " + message);
 
-        helper.setCommunication(new UsbHelperListener() {
+        MainUsbSerialHelper.setDeviceCallback(new UsbHelperListener() {
             @Override
             public void onDeviceConnect() {
-                progressDialog.setMessage("Connecting...");
-
                 Log.d(TAG, "Activity : Device Connected...");
-                /*runOnUiThread(() -> {
-                    receivedTextTv.append("Device Connected....\n");
-                    deviceStatusTv.setText("Device Connected...");
-                    deviceStatusTv.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.verify_color)));
-                });*/
                 receivedTextTv.append("Device Connected....\n");
                 deviceStatusTv.setText("Device Connected...");
                 deviceStatusTv.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.verify_color)));
             }
 
             @Override
-            public void onDeviceVerified(boolean isVerified) {
-                progressDialog.setMessage("Verifying...");
-                progressDialog.dismiss();
+            public void onDeviceVerified() {
                 Log.d(TAG, "Activity : Device Verified...");
-
-                /*runOnUiThread(() -> {
-                    receivedTextTv.append("Received : Device ready for communication\n");
-                    deviceStatusTv.setText("Device Verified...");
-                    deviceStatusTv.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.start_color)));
-
-                });*/
                 receivedTextTv.append("Received : Device ready for communication\n");
                 deviceStatusTv.setText("Device Verified...");
                 deviceStatusTv.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.start_color)));
             }
 
             @Override
-            public void onTransmission(String data) {
-                if (progressDialog.isShowing())
-                    progressDialog.dismiss();
+            public void onReceivedData(String data) {
+                if (progressDialog.isShowing()) progressDialog.dismiss();
                 Log.w(TAG, "Activity : " + data);
                 runOnUiThread(() -> receivedTextTv.append("Received : " + data + "\n"));
-                //runOnUiThread(() -> receivedTextTv.setText("Received : " + data + "\n"));
-                //receivedTextTv.append("Received : " + data + "\n");
             }
 
             @Override
             public void onDeviceDisconnect() {
-                progressDialog.dismiss();
                 Log.d(TAG, "Activity : Device Disconnected");
                 receivedTextTv.append("Device disconnected or transmission stopped.....\n");
                 deviceStatusTv.setText("Device Disconnected...");
@@ -141,15 +120,12 @@ public class MainActivity extends AppCompatActivity {
 
             @Override
             public void onConnectionError(String errorMessage) {
-                progressDialog.dismiss();
                 Log.e(TAG, "onConnectionError: " + errorMessage);
                 deviceStatusTv.setText("Device Error...");
                 deviceStatusTv.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.stop_color)));
                 receivedTextTv.append(errorMessage + "\n");
             }
         });
-        startBtn.setOnClickListener(v -> helper.onStartTransmission());
-        stopBtn.setOnClickListener(v -> helper.onStopTransmission());
     }
 
     @Override
@@ -193,8 +169,6 @@ public class MainActivity extends AppCompatActivity {
         progressDialog = new ProgressDialog(this);
         progressDialog.setTitle("Please wait");
         progressDialog.setCanceledOnTouchOutside(false);
-
-        helper = UsbSerialCommunicationHelper1.getInstance(this);
     }
 
 }

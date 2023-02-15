@@ -1,9 +1,8 @@
-package com.example.devicedetect.customClass
+package com.example.devicedetect
 
 import android.text.SpannableStringBuilder
 import android.util.Log
-import com.example.devicedetect.customClass.Util.ConstantHelperCustom
-import com.example.devicedetect.customClass.Util.Util
+import com.example.devicedetect.Util.ConstantHelper
 import java.security.NoSuchAlgorithmException
 
 internal object UsbDataFiltering {
@@ -27,7 +26,7 @@ internal object UsbDataFiltering {
         val currentCommand = MainUsbSerialHelper.currentCommand
 
         //REQUEST TO UNLOCK
-        if (currentCommand == ConstantHelperCustom.REQUEST_TO_UNLOCK) {
+        if (currentCommand == ConstantHelper.REQUEST_TO_UNLOCK) {
             stringBuilder.append(spn)
             if (stringBuilder.length == 99) {
                 val deviceId = stringBuilder.substring(7, 23)//Get Device Id
@@ -37,7 +36,7 @@ internal object UsbDataFiltering {
                 try {
                     //Generate Hash Value
                     generatedHashValue =
-                        Util.toHexString(Util.getSHA(deviceId + microControllerId + ConstantHelperCustom.NOISE))
+                        ConstantHelper.toHexString(ConstantHelper.getSHA(deviceId + microControllerId + ConstantHelper.NOISE))
                     if (generatedHashValue == deviceHashValue) {
                         //mainLooper!!.post { usbHelperListener!!.onTransmission("Device Unlocked...") }
                         stringBuilder.setLength(0)
@@ -48,7 +47,10 @@ internal object UsbDataFiltering {
                         )
 
                         //REQUEST FOR CONNECT
-                        MainUsbSerialHelper.sendVerificationCommand(ConstantHelperCustom.REQUEST_TO_CONNECT + generatedHashValue)
+                        //MainUsbSerialHelper.sendVerificationCommand(ConstantHelper.REQUEST_TO_CONNECT + generatedHashValue)
+                        MainUsbSerialHelper.receivedData(
+                            "", ConstantHelper.REQUEST_TO_CONNECT + generatedHashValue
+                        )
 
                     } else {
                         //mainLooper!!.post { usbHelperListener.onConnectionError("Unauthentic Device...") }
@@ -59,20 +61,20 @@ internal object UsbDataFiltering {
                     Log.e(TAG, "Error : " + e.message)
                 }
             }
-        } else if (currentCommand == ConstantHelperCustom.REQUEST_TO_CONNECT + generatedHashValue) {
+        } else if (currentCommand == ConstantHelper.REQUEST_TO_CONNECT + generatedHashValue) {
             stringBuilder.append(spn)
             if (stringBuilder.length == 71) {
                 val receivedHashValue = stringBuilder.substring(7, 71)
                 if (generatedHashValue == receivedHashValue) {
                     //set deviceVerificationState = true
-                    MainUsbSerialHelper.deviceVerificationState(true, "Verified")
+                    MainUsbSerialHelper.setDeviceVerificationState(true, "Verified")
                 } else {
                     //set deviceVerificationState = false
-                    MainUsbSerialHelper.deviceVerificationState(false, "Invalid Hash Value Device")
+                    MainUsbSerialHelper.setDeviceVerificationState(false, "Invalid Hash Value Device")
                 }
                 stringBuilder.setLength(0)
             }
-        } else if (currentCommand == ConstantHelperCustom.START_KEY) {
+        } else if (currentCommand == ConstantHelper.START_KEY) {
             val cmd = currentCommand
 
             /*//LOGIC for find duplicate entries
@@ -94,19 +96,17 @@ internal object UsbDataFiltering {
             //APPLY FILTER WITH DELIMITER
             stringBuilder.append(spn)
             if (stringBuilder.isNotEmpty() || stringBuilder.toString()
-                    .contains(ConstantHelperCustom.DELIMITER)
+                    .contains(ConstantHelper.DELIMITER)
             ) {
-                val result =
-                    stringBuilder.toString().split(ConstantHelperCustom.DELIMITER).toTypedArray()
+                val result = stringBuilder.toString().split(ConstantHelper.DELIMITER).toTypedArray()
                 val lastElementOfResult = result[result.size - 1]
                 val lastElementOfBuilder = stringBuilder.substring(
-                    stringBuilder.lastIndexOf(ConstantHelperCustom.DELIMITER) + 1,
-                    stringBuilder.length
+                    stringBuilder.lastIndexOf(ConstantHelper.DELIMITER) + 1, stringBuilder.length
                 )
                 if (lastElementOfResult == lastElementOfBuilder) {
                     returnFilteredData(result, 0, result.size - 1, cmd)
                     stringBuilder.delete(
-                        0, stringBuilder.lastIndexOf(ConstantHelperCustom.DELIMITER) + 1
+                        0, stringBuilder.lastIndexOf(ConstantHelper.DELIMITER) + 1
                     )
                 } else {
                     returnFilteredData(result, 0, result.size, cmd)
@@ -119,7 +119,7 @@ internal object UsbDataFiltering {
             //Log.w(TAG, "receiveTransmittedData: Data $spn \tCounter : $time")
             //usbHelperListener!!.onTransmission("$spn \tCounter : $time")
 
-        } else if (currentCommand == ConstantHelperCustom.STOP_KEY) {
+        } else if (currentCommand == ConstantHelper.STOP_KEY) {
             val time = ++counter
             //Log.e(TAG, "receiveTransmittedData: " + command + " : " + System.currentTimeMillis() + "\tCounter : " + time)
             //usbHelperListener.onTransmission("Data : Stop -- " + spn + " : " + "\tData Length : " + spn.length() + "\tExact Length : " + time);
@@ -129,19 +129,17 @@ internal object UsbDataFiltering {
             //APPLY FILTER WITH DELIMITER
             stringBuilder.append(spn)
             if (stringBuilder.isNotEmpty() || stringBuilder.toString()
-                    .contains(ConstantHelperCustom.DELIMITER)
+                    .contains(ConstantHelper.DELIMITER)
             ) {
-                val result =
-                    stringBuilder.toString().split(ConstantHelperCustom.DELIMITER).toTypedArray()
+                val result = stringBuilder.toString().split(ConstantHelper.DELIMITER).toTypedArray()
                 val lastElementOfResult = result[result.size - 1]
                 val lastElementOfBuilder = stringBuilder.substring(
-                    stringBuilder.lastIndexOf(ConstantHelperCustom.DELIMITER) + 1,
-                    stringBuilder.length
+                    stringBuilder.lastIndexOf(ConstantHelper.DELIMITER) + 1, stringBuilder.length
                 )
                 if (lastElementOfResult == lastElementOfBuilder) {
                     returnFilteredData(result, 0, result.size - 1, "")
                     stringBuilder.delete(
-                        0, stringBuilder.lastIndexOf(ConstantHelperCustom.DELIMITER) + 1
+                        0, stringBuilder.lastIndexOf(ConstantHelper.DELIMITER) + 1
                     )
                 } else {
                     returnFilteredData(result, 0, result.size, "")
@@ -154,18 +152,18 @@ internal object UsbDataFiltering {
         //APPLY FILTER WITH DELIMITER
         stringBuilder.append(spn)
         if (stringBuilder.isNotEmpty() || stringBuilder.toString()
-                .contains(ConstantHelperCustom.DELIMITER)
+                .contains(ConstantHelper.DELIMITER)
         ) {
             val result =
-                stringBuilder.toString().split(ConstantHelperCustom.DELIMITER).toTypedArray()
+                stringBuilder.toString().split(ConstantHelper.DELIMITER).toTypedArray()
             val lastElementOfResult = result[result.size - 1]
             val lastElementOfBuilder = stringBuilder.substring(
-                stringBuilder.lastIndexOf(ConstantHelperCustom.DELIMITER) + 1, stringBuilder.length
+                stringBuilder.lastIndexOf(ConstantHelper.DELIMITER) + 1, stringBuilder.length
             )
             if (lastElementOfResult == lastElementOfBuilder) {
                 returnFilteredData(result, 0, result.size - 1, cmd)
                 stringBuilder.delete(
-                    0, stringBuilder.lastIndexOf(ConstantHelperCustom.DELIMITER) + 1
+                    0, stringBuilder.lastIndexOf(ConstantHelper.DELIMITER) + 1
                 )
             } else {
                 returnFilteredData(result, 0, result.size, cmd)

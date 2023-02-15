@@ -3,9 +3,9 @@ package com.example.devicedetect;
 public interface UsbHelperListener {
     void onDeviceConnect();
 
-    void onDeviceVerified(boolean isVerified);
+    void onDeviceVerified();
 
-    void onTransmission(String data);
+    void onReceivedData(String data);
 
     void onDeviceDisconnect();
 

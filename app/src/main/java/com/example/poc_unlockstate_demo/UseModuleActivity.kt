@@ -9,13 +9,13 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.devicedetect.MainUsbSerialHelper
 import com.example.devicedetect.UsbHelperListener
-import com.example.poc_unlockstate_demo.databinding.ActivityMainKotlinBinding
+import com.example.poc_unlockstate_demo.databinding.ActivityUseModuleBinding
 
-class MainActivityKotlin : AppCompatActivity() {
+class UseModuleActivity : AppCompatActivity() {
 
     private var TAG = javaClass.simpleName
 
-    lateinit var binding: ActivityMainKotlinBinding
+    lateinit var binding: ActivityUseModuleBinding
 
     //Module Variables
     var arraylist = ArrayList<String>()
@@ -25,10 +25,12 @@ class MainActivityKotlin : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        binding = ActivityMainKotlinBinding.inflate(layoutInflater)
+        binding = ActivityUseModuleBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        initialization()
+        binding.receivedTextTv.movementMethod = ScrollingMovementMethod()
+
+        binding.partitionEt.setText("100")
 
         binding.sendBtn.setOnClickListener { sendCommand() }
 
@@ -40,8 +42,7 @@ class MainActivityKotlin : AppCompatActivity() {
             arraylist.clear()
         }
 
-        //set default partition
-        binding.partitionEt.setText("100")
+        //useModule("onCreate")
     }
 
     private fun sendCommand() {
@@ -132,7 +133,4 @@ class MainActivityKotlin : AppCompatActivity() {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
-    private fun initialization() {
-        binding.receivedTextTv.movementMethod = ScrollingMovementMethod()
-    }
 }
