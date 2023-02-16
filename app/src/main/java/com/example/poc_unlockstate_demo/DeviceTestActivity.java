@@ -57,6 +57,8 @@ public class DeviceTestActivity extends AppCompatActivity {
 
         //handle clearBtn click, to clear the views
         binding.clearBtn.setOnClickListener(v -> clearViewsAndLists());
+
+        useModule();
     }
 
     private void clearViewsAndLists() {
@@ -227,14 +229,14 @@ public class DeviceTestActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        useModule();
+        //useModule();
     }
 
-    @Override
+    /*@Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(intent.getAction())) useModule();
-    }
+    }*/
 
     private void useModule() {
         MainUsbSerialHelper.setDeviceCallback(new UsbHelperListener() {
@@ -281,7 +283,7 @@ public class DeviceTestActivity extends AppCompatActivity {
                 binding.deviceStatusTv.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.stop_color)));
                 binding.receivedTextTv.append(errorMessage + "\n");
             }
-        });
+        }, this);
     }
 
     private void showToast(String message) {

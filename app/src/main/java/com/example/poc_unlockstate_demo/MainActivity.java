@@ -63,6 +63,8 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
             }
         });
+
+        useModule("onCreate");
     }
 
     private void sendCommand() {
@@ -78,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        useModule("onResume");
+        //useModule("onResume");
     }
 
     private void useModule(String message) {
@@ -125,16 +127,16 @@ public class MainActivity extends AppCompatActivity {
                 deviceStatusTv.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.stop_color)));
                 receivedTextTv.append(errorMessage + "\n");
             }
-        });
+        }, this);
     }
 
-    @Override
+    /*@Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         if (UsbManager.ACTION_USB_DEVICE_ATTACHED.equals(intent.getAction())) {
             useModule("onNewIntent");
         }
-    }
+    }*/
 
     public static byte[] getSHA(String input) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("SHA-256");

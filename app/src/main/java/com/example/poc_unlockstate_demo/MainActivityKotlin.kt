@@ -42,6 +42,8 @@ class MainActivityKotlin : AppCompatActivity() {
 
         //set default partition
         binding.partitionEt.setText("100")
+
+        useModule("onCreate")
     }
 
     private fun sendCommand() {
@@ -71,7 +73,7 @@ class MainActivityKotlin : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        useModule("onResume")
+        //useModule("onResume")
     }
 
     private fun useModule(message: String) {
@@ -125,7 +127,7 @@ class MainActivityKotlin : AppCompatActivity() {
                     binding.receivedTextTv.append("$errorMessage\n")
                 }
             }
-        })
+        }, this)
     }
 
     private fun showToast(message: String) {

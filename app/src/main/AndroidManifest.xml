@@ -22,7 +22,7 @@
             android:name=".UseModuleActivity"
             android:exported="true"
             android:launchMode="singleTask">
-            <!--<intent-filter>
+            <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
 
@@ -31,7 +31,7 @@
 
             <meta-data
                 android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
-                android:resource="@xml/device_filter" />-->
+                android:resource="@xml/device_filter" />
         </activity>
         <activity
             android:name=".DeviceTestActivity"
@@ -71,7 +71,7 @@
             android:name=".MainActivityKotlin"
             android:exported="true"
             android:launchMode="singleTask">
-            <intent-filter>
+            <!--<intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED" />
 
@@ -80,7 +80,7 @@
 
             <meta-data
                 android:name="android.hardware.usb.action.USB_DEVICE_ATTACHED"
-                android:resource="@xml/device_filter" />
+                android:resource="@xml/device_filter" />-->
         </activity>
     </application>
 

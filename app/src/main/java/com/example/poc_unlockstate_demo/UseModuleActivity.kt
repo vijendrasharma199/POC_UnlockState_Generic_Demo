@@ -42,7 +42,7 @@ class UseModuleActivity : AppCompatActivity() {
             arraylist.clear()
         }
 
-        //useModule("onCreate")
+        useModule("onCreate")
     }
 
     private fun sendCommand() {
@@ -72,7 +72,7 @@ class UseModuleActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        useModule("onResume")
+        //useModule("onResume")
     }
 
     private fun useModule(message: String) {
@@ -126,7 +126,7 @@ class UseModuleActivity : AppCompatActivity() {
                     binding.receivedTextTv.append("$errorMessage\n")
                 }
             }
-        })
+        }, this)
     }
 
     private fun showToast(message: String) {
