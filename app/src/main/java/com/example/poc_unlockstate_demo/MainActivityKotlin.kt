@@ -74,10 +74,13 @@ class MainActivityKotlin : AppCompatActivity() {
         super.onResume()
         useModule("onResume")
 
-        val decoder = SpandanResponseDecoder("0123456789abcdef")
+        //val decoder = SpandanResponseDecoder("0123456789abcdef")
+        val decoder = SpandanResponseDecoder("1234567890abcdef")
         binding.computeData.setOnClickListener {
+            //binding.receivedTextTv.append("\nRTU DATA SET : ${rtuDataSet.lines().get(4)}\n")
+            binding.receivedTextTv.append("\nRTU DATA SET : ${rtuDataSet}\n")
             rtuDataSet.lines().forEachIndexed { index, s ->
-                Log.d(TAG, "onResume: $index")
+                Log.d(TAG, "onResume: $index : $s")
                 if (index in 4..7) {
                     if(index==4)
                     decoder
@@ -128,11 +131,11 @@ class MainActivityKotlin : AppCompatActivity() {
                     binding.receivedTextTv.append("Received : $data\n")
                 }
                 rtuDataSet.append(data)
-                arraylist.add(data)
+                /*arraylist.add(data)
                 if (arraylist.size % divideBy == 0) {
                     var size = arraylist.size
                     runOnUiThread { binding.receivedTextTv.append("Received : $data : Size of List : $size\n") }
-                }
+                }*/
             }
 
             override fun onDeviceDisconnect() {

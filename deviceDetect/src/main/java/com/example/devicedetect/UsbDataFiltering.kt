@@ -2,11 +2,9 @@ package com.example.devicedetect
 
 import android.text.SpannableStringBuilder
 import android.util.Log
-import com.example.devicedetect.Util.ConstantHelper
 import com.example.devicedetect.Util.SpandanResponseDecoder
-import java.security.NoSuchAlgorithmException
 
-internal object UsbDataFiltering : DataFilterInterface{
+internal object UsbDataFiltering : DataFilterInterface {
     var TAG = "USB_DATA_FILTERING"
 
     private var counter: Int = 0
@@ -19,50 +17,14 @@ internal object UsbDataFiltering : DataFilterInterface{
      * @param data = device response data( in ByteArray)
      */
     fun getRawDataAnApplyFilter(data: ByteArray) {
-        Log.w(TAG, "getRawData: $data")
+        //Log.w(TAG, "getRawData: $data")
 
         val spn = SpannableStringBuilder()
         if (data.isNotEmpty()) spn.append(String(data))
 
         val currentCommand = MainUsbSerialHelper.currentCommand
 
-        //REQUEST TO UNLOCK
-//        if (currentCommand == ConstantHelper.REQUEST_TO_UNLOCK) {
-//            stringBuilder.append(spn)
-//            if (stringBuilder.length == 99) {
-//                val deviceId = stringBuilder.substring(7, 23)//Get Device Id
-//                val microControllerId = stringBuilder.substring(23, 35)//Get MID
-//                deviceHashValue =
-//                    stringBuilder.substring(35, stringBuilder.length)//Get Device HashValue
-//                try {
-//                    //Generate Hash Value
-//                    generatedHashValue =
-//                        ConstantHelper.toHexString(ConstantHelper.getSHA(deviceId + microControllerId + ConstantHelper.NOISE))
-//                    if (generatedHashValue == deviceHashValue) {
-//                        //mainLooper!!.post { usbHelperListener!!.onTransmission("Device Unlocked...") }
-//                        stringBuilder.setLength(0)
-//                        //REQUEST FOR CONNECT
-//                        Log.w(
-//                            TAG,
-//                            "receiveTransmittedData: Generated Hash Value : $generatedHashValue"
-//                        )
-//
-//                        //REQUEST FOR CONNECT
-//                        //MainUsbSerialHelper.sendVerificationCommand(ConstantHelper.REQUEST_TO_CONNECT + generatedHashValue)
-//                        MainUsbSerialHelper.receivedData(
-//                            "", ConstantHelper.REQUEST_TO_CONNECT + generatedHashValue
-//                        )
-//
-//                    } else {
-//                        //mainLooper!!.post { usbHelperListener.onConnectionError("Unauthentic Device...") }
-//                        MainUsbSerialHelper.receivedData("Unauthentic Device")
-//                    }
-//                } catch (e: NoSuchAlgorithmException) {
-//                    e.printStackTrace()
-//                    Log.e(TAG, "Error : " + e.message)
-//                }
-//            }
-//        }
+
         if (currentCommand.contains("RTU")) {
             /*stringBuilder.append(spn)
             if (stringBuilder.length == 99) {
@@ -100,42 +62,37 @@ internal object UsbDataFiltering : DataFilterInterface{
             }*/
 
             stringBuilder.append(spn)
-            if (stringBuilder.length == 191) {
-                val startResponse = stringBuilder.substring(0, 7)//Get Device Id
-                val deviceId = stringBuilder.substring(7, 39)//Get Device Id
-                val microControllerId = stringBuilder.substring(39, 63)//Get MID
+            /**
+             * It will be change again
+             *
+             *
+             * if (stringBuilder.length == 191) {
+            val startResponse = stringBuilder.substring(0, 7)//Get Device Id
+            val deviceId = stringBuilder.substring(7, 39)//Get Device Id
+            val microControllerId = stringBuilder.substring(39, 63)//Get MID
+            deviceHashValue =
+            stringBuilder.substring(63, stringBuilder.length)//Get Device HashValue
+
+            Log.w(TAG, "getRawDataAnApplyFilter: $startResponse\n$deviceId\n$microControllerId\n$deviceHashValue")
+            MainUsbSerialHelper.receivedData("$startResponse\n$deviceId\n$microControllerId\n$deviceHashValue")
+            stringBuilder.setLength(0)
+            }*/
+
+            if (stringBuilder.length == 191 + 191) {
+                val startResponse = stringBuilder.substring(0 + 191, 7 + 191)//Get Device Id
+                val deviceId = stringBuilder.substring(7 + 191, 39 + 191)//Get Device Id
+                val microControllerId = stringBuilder.substring(39 + 191, 63 + 191)//Get MID
                 deviceHashValue =
-                    stringBuilder.substring(63, stringBuilder.length)//Get Device HashValue
+                    stringBuilder.substring(63 + 191, stringBuilder.length)//Get Device HashValue
 
-                MainUsbSerialHelper.receivedData("$startResponse\n$deviceId\n$microControllerId\n$deviceHashValue")
+                Log.w(
+                    TAG,
+                    "getRawDataAnApplyFilter: $startResponse\n$deviceId\n$microControllerId\n$deviceHashValue"
+                )
+                //set data to user
+                MainUsbSerialHelper.receivedData("$startResponse\n${decodeData(deviceId)}\n${decodeData(microControllerId)}\n$deviceHashValue")
                 stringBuilder.setLength(0)
-                /*try {
-                    //Generate Hash Value
-                    generatedHashValue =
-                        ConstantHelper.toHexString(ConstantHelper.getSHA(deviceId + microControllerId + ConstantHelper.NOISE))
-                    if (generatedHashValue == deviceHashValue) {
-                        //mainLooper!!.post { usbHelperListener!!.onTransmission("Device Unlocked...") }
-                        stringBuilder.setLength(0)
-                        //REQUEST FOR CONNECT
-                        Log.w(
-                            TAG,
-                            "receiveTransmittedData: Generated Hash Value : $generatedHashValue"
-                        )
 
-                        //REQUEST FOR CONNECT
-                        //MainUsbSerialHelper.sendVerificationCommand(ConstantHelper.REQUEST_TO_CONNECT + generatedHashValue)
-                        MainUsbSerialHelper.receivedData(
-                            "", ConstantHelper.REQUEST_TO_CONNECT + generatedHashValue
-                        )
-
-                    } else {
-                        //mainLooper!!.post { usbHelperListener.onConnectionError("Unauthentic Device...") }
-                        MainUsbSerialHelper.receivedData("Unauthentic Device")
-                    }
-                } catch (e: NoSuchAlgorithmException) {
-                    e.printStackTrace()
-                    Log.e(TAG, "Error : " + e.message)
-                }*/
             }
         }
         /*else if (currentCommand == ConstantHelper.REQUEST_TO_CONNECT + generatedHashValue) {
@@ -254,7 +211,11 @@ internal object UsbDataFiltering : DataFilterInterface{
         }
     }
 
-    override fun decodeData(input: String) {
-        SpandanResponseDecoder("1234567890abcdef").decodeResponseDid(input)
+    override fun decodeData(input: String): String {
+        //get input key from command
+        val inputKey = if (MainUsbSerialHelper.currentCommand.contains("RTU")) {
+            MainUsbSerialHelper.currentCommand.replace("RTU", "")
+        } else ""
+        return SpandanResponseDecoder(inputKey).decode(input)
     }
 }
