@@ -273,6 +273,7 @@ object MainUsbSerialHelper {
 
     @JvmStatic
     fun sendCommand(cmd: String) {
+        Log.d(TAG, "sendCommand: $cmd")
         send(cmd)
     }
 

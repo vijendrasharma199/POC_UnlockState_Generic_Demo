@@ -85,10 +85,10 @@ class UsbSerialIOManager(
                                         Log.v(TAG, "Read Data : " + String(data))
 
                                         //receiveRawDataAndApplyFilter
-                                        receiveRawDataAndApplyFilter(data)
+//                                        receiveRawDataAndApplyFilter(data)
 
                                         //send data for filtering
-                                        //UsbDataFiltering.getRawDataAnApplyFilter(data)
+                                        UsbDataFiltering.getRawDataAnApplyFilter(data)
 
                                     } else {
                                         Log.e(TAG, "launchCoroutine: Len is less than 0")
@@ -122,7 +122,9 @@ class UsbSerialIOManager(
         val cmd = MainUsbSerialHelper.currentCommand
         Log.w("CMD_TAG", "receiveRawDataAndApplyFilter: $cmd")
 
-        //APPLY FILTER WITH DELIMITER
+        MainUsbSerialHelper.receivedData(spn.toString())
+
+        /*//APPLY FILTER WITH DELIMITER
         stringBuilder.append(spn)
         if (stringBuilder.isNotEmpty() || (stringBuilder.toString()
                 .contains(ConstantHelper.DELIMITER))
@@ -141,7 +143,7 @@ class UsbSerialIOManager(
                 returnFilteredData(result, 0, result.size, cmd)
                 stringBuilder.delete(0, stringBuilder.length)
             }
-        }
+        }*/
     }
 
     /**

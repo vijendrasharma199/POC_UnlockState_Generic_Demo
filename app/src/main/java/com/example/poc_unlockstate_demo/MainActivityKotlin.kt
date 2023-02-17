@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.devicedetect.MainUsbSerialHelper
 import com.example.devicedetect.UsbHelperListener
+import com.example.devicedetect.Util.SpandanResponseDecoder
 import com.example.poc_unlockstate_demo.databinding.ActivityMainKotlinBinding
 
 class MainActivityKotlin : AppCompatActivity() {
@@ -72,7 +73,32 @@ class MainActivityKotlin : AppCompatActivity() {
     override fun onResume() {
         super.onResume()
         useModule("onResume")
+
+        val decoder = SpandanResponseDecoder("0123456789abcdef")
+        binding.computeData.setOnClickListener {
+            rtuDataSet.lines().forEachIndexed { index, s ->
+                Log.d(TAG, "onResume: $index")
+                if (index in 4..7) {
+                    if(index==4)
+                    decoder
+                        .decodeResponseDid(s).let {
+                            Log.d(TAG, "onResume did: ${it}")
+                        }
+                    else if(index == 5)
+                        decoder
+                            .decodeResponseMid(s).let {
+                                Log.d(TAG, "onResume mid: $it")
+                            }
+                }
+            }
+        }
     }
+
+//    [a, b, c, d, e, f, g, h, a, b, c, d, e, f, g, h]
+//    [Q, $, I, $, 4, ], F, _, J, C, C, 8]
+//    [C, D, E, F, G, H, I, J, K, B, C, D, E, F, G, H, I, J, K, B, C, D, E, F, G, H, I, J, K, B, C, D, E, F, G, H, I, J, K, B, C, D, E, F, G, H, I, J, K, B, C, D, E, F, G, H, I, J, K, B, C, D, E, F]
+
+    private val rtuDataSet = StringBuilder()
 
     private fun useModule(message: String) {
         arraylist.clear()
@@ -98,6 +124,10 @@ class MainActivityKotlin : AppCompatActivity() {
 
             override fun onReceivedData(data: String) {
                 Log.w(TAG, "Activity : $data")
+                runOnUiThread {
+                    binding.receivedTextTv.append("Received : $data\n")
+                }
+                rtuDataSet.append(data)
                 arraylist.add(data)
                 if (arraylist.size % divideBy == 0) {
                     var size = arraylist.size
