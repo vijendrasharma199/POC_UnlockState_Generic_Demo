@@ -2,7 +2,6 @@ package com.example.poc_unlockstate_demo;
 
 import android.content.Intent;
 import android.content.res.ColorStateList;
-import android.hardware.usb.UsbManager;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -18,7 +17,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.devicedetect.MainUsbSerialHelper;
-import com.example.devicedetect.UsbHelperListener;
+import com.example.devicedetect.interfaces.UsbHelperListener;
 import com.example.poc_unlockstate_demo.databinding.ActivityDeviceTestBinding;
 
 import java.io.File;

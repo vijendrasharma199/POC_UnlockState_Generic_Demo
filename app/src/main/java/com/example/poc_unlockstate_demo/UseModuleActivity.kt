@@ -8,7 +8,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.devicedetect.MainUsbSerialHelper
-import com.example.devicedetect.UsbHelperListener
+import com.example.devicedetect.interfaces.UsbHelperListener
 import com.example.poc_unlockstate_demo.databinding.ActivityUseModuleBinding
 
 class UseModuleActivity : AppCompatActivity() {
@@ -78,7 +78,8 @@ class UseModuleActivity : AppCompatActivity() {
     private fun useModule(message: String) {
         arraylist.clear()
 
-        MainUsbSerialHelper.setDeviceCallback(object : UsbHelperListener {
+        MainUsbSerialHelper.setDeviceCallback(object :
+            UsbHelperListener {
             override fun onDeviceConnect() {
                 Log.d(TAG, "Activity : Device Connected...")
                 runOnUiThread {

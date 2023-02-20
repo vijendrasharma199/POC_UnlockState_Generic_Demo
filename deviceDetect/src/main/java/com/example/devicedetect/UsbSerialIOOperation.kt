@@ -3,6 +3,7 @@ package com.example.devicedetect
 import android.hardware.usb.*
 import android.util.Log
 import com.example.devicedetect.Util.ConstantHelper
+import com.example.devicedetect.interfaces.UsbHelperListener
 import java.io.IOException
 import java.nio.ByteBuffer
 import kotlin.math.max

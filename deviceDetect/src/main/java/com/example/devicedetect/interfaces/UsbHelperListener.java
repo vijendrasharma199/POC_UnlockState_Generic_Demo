@@ -1,4 +1,4 @@
-package com.example.devicedetect;
+package com.example.devicedetect.interfaces;
 
 public interface UsbHelperListener {
     void onDeviceConnect();

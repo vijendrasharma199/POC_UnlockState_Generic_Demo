@@ -3,6 +3,7 @@ package com.example.devicedetect
 import android.text.SpannableStringBuilder
 import android.util.Log
 import com.example.devicedetect.Util.ConstantHelper
+import com.example.devicedetect.interfaces.UsbHelperListener
 import kotlinx.coroutines.*
 import java.nio.ByteBuffer
 
@@ -85,11 +86,10 @@ class UsbSerialIOManager(
                                         Log.v(TAG, "Read Data : " + String(data))
 
                                         //receiveRawDataAndApplyFilter
-                                        receiveRawDataAndApplyFilter(data)
+                                        //receiveRawDataAndApplyFilter(data)
 
                                         //send data for filtering
-                                        //UsbDataFiltering.getRawDataAnApplyFilter(data)
-
+                                        UsbDataFiltering.getRawDataAnApplyFilter(data)
 
                                     } else {
                                         Log.e(TAG, "launchCoroutine: Len is less than 0")

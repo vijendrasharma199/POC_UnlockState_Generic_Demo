@@ -7,16 +7,7 @@ import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 
 object ConstantHelper {
-//    internal const val spandanVendorId = 1155
-//    internal const val spandanVendorId1 = 4292
-//    internal const val spandanVendorId2 = 9025
-//    internal const val REQUEST_TO_UNLOCK = "RTU"
-//    internal const val REQUEST_TO_CONNECT = "RTC"
-//    internal const val START_KEY = "1"
-//    internal const val STOP_KEY = "0"
-    //internal const val DELIMITER = "Y"
     internal val DELIMITER = MainUsbSerialHelper.DELIMITER
-//    internal const val NOISE = "SPDN"
 
     //ENUM Class
     internal enum class UsbPermission {

@@ -1,9 +1,7 @@
 package com.example.poc_unlockstate_demo;
 
 import android.app.ProgressDialog;
-import android.content.Intent;
 import android.content.res.ColorStateList;
-import android.hardware.usb.UsbManager;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.text.method.ScrollingMovementMethod;
@@ -16,7 +14,7 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.example.devicedetect.MainUsbSerialHelper;
-import com.example.devicedetect.UsbHelperListener;
+import com.example.devicedetect.interfaces.UsbHelperListener;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;

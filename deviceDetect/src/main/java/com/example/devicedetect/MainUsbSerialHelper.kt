@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import com.example.devicedetect.Util.ConstantHelper
+import com.example.devicedetect.interfaces.UsbHelperListener
 
 object MainUsbSerialHelper {
 
@@ -319,8 +320,9 @@ object MainUsbSerialHelper {
         }
 
         //check for permission and connect
-        if (usbPermission == ConstantHelper.UsbPermission.Unknown || usbPermission == ConstantHelper.UsbPermission.Granted)
-            connect("T")
+        if (usbPermission == ConstantHelper.UsbPermission.Unknown || usbPermission == ConstantHelper.UsbPermission.Granted) connect(
+            "T"
+        )
     }
 
     @JvmStatic
