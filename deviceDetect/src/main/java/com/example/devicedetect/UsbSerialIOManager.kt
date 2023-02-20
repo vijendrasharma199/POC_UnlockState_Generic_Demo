@@ -85,10 +85,10 @@ class UsbSerialIOManager(
                                         Log.v(TAG, "Read Data : " + String(data))
 
                                         //receiveRawDataAndApplyFilter
-                                        receiveRawDataAndApplyFilter(data)
+                                        //receiveRawDataAndApplyFilter(data)
 
                                         //send data for filtering
-                                        //UsbDataFiltering.getRawDataAnApplyFilter(data)
+                                        UsbDataFiltering.getRawDataAnApplyFilter(data)
 
                                     } else {
                                         Log.e(TAG, "launchCoroutine: Len is less than 0")
@@ -155,7 +155,6 @@ class UsbSerialIOManager(
         for (i in start until end) {
             val time = ++counter
             Log.w(TAG, "returnDataToUser: Data ${result[i]} \tCounter : $time")
-            //mUsbListener.onTransmission(result[i])
             MainUsbSerialHelper.receivedData(result[i])
             //UsbDataFiltering.getRawDataAnApplyFilter(result[i])
         }

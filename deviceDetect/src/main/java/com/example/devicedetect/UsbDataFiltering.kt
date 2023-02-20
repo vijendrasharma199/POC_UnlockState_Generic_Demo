@@ -2,10 +2,9 @@ package com.example.devicedetect
 
 import android.text.SpannableStringBuilder
 import android.util.Log
-import com.example.devicedetect.Util.ConstantHelper
-import java.security.NoSuchAlgorithmException
+import com.example.devicedetect.Util.SpandanResponseDecoder
 
-internal object UsbDataFiltering {
+internal object UsbDataFiltering : DataFilterInterface {
     var TAG = "USB_DATA_FILTERING"
 
     private var counter: Int = 0
@@ -18,16 +17,12 @@ internal object UsbDataFiltering {
      * @param data = device response data( in ByteArray)
      */
     fun getRawDataAnApplyFilter(data: ByteArray) {
-        Log.w(TAG, "getRawData: $data")
-
         val spn = SpannableStringBuilder()
         if (data.isNotEmpty()) spn.append(String(data))
-
         val currentCommand = MainUsbSerialHelper.currentCommand
 
-        //REQUEST TO UNLOCK
-        if (currentCommand == ConstantHelper.REQUEST_TO_UNLOCK) {
-            stringBuilder.append(spn)
+        if (currentCommand.contains("RTU")) {
+            /*stringBuilder.append(spn)
             if (stringBuilder.length == 99) {
                 val deviceId = stringBuilder.substring(7, 23)//Get Device Id
                 val microControllerId = stringBuilder.substring(23, 35)//Get MID
@@ -60,8 +55,48 @@ internal object UsbDataFiltering {
                     e.printStackTrace()
                     Log.e(TAG, "Error : " + e.message)
                 }
+            }*/
+
+            stringBuilder.append(spn)
+            /**
+             * It will be change again
+             *
+             *
+             * if (stringBuilder.length == 191) {
+            val startResponse = stringBuilder.substring(0, 7)//Get Device Id
+            val deviceId = stringBuilder.substring(7, 39)//Get Device Id
+            val microControllerId = stringBuilder.substring(39, 63)//Get MID
+            deviceHashValue =
+            stringBuilder.substring(63, stringBuilder.length)//Get Device HashValue
+
+            Log.w(TAG, "getRawDataAnApplyFilter: $startResponse\n$deviceId\n$microControllerId\n$deviceHashValue")
+            MainUsbSerialHelper.receivedData("$startResponse\n$deviceId\n$microControllerId\n$deviceHashValue")
+            stringBuilder.setLength(0)
+            }*/
+
+            if (stringBuilder.length == 191 + 191) {
+                val startResponse = stringBuilder.substring(0 + 191, 7 + 191)//Get Device Id
+                val deviceId = stringBuilder.substring(7 + 191, 39 + 191)//Get Device Id
+                val microControllerId = stringBuilder.substring(39 + 191, 63 + 191)//Get MID
+                deviceHashValue =
+                    stringBuilder.substring(63 + 191, stringBuilder.length)//Get Device HashValue
+
+                Log.w(
+                    TAG,
+                    "getRawDataAnApplyFilter: $startResponse\n$deviceId\n$microControllerId\n$deviceHashValue"
+                )
+                //set data to user
+                MainUsbSerialHelper.receivedData(
+                    "$startResponse\n${decodeData(deviceId)}\n${
+                        decodeData(
+                            microControllerId
+                        )
+                    }\n$deviceHashValue"
+                )
+                stringBuilder.setLength(0)
             }
-        } else if (currentCommand == ConstantHelper.REQUEST_TO_CONNECT + generatedHashValue) {
+        }
+        /*else if (currentCommand == ConstantHelper.REQUEST_TO_CONNECT + generatedHashValue) {
             stringBuilder.append(spn)
             if (stringBuilder.length == 71) {
                 val receivedHashValue = stringBuilder.substring(7, 71)
@@ -74,24 +109,10 @@ internal object UsbDataFiltering {
                 }
                 stringBuilder.setLength(0)
             }
-        } else if (currentCommand == ConstantHelper.START_KEY) {
+        }
+        else if (currentCommand == ConstantHelper.START_KEY) {
             val cmd = currentCommand
 
-            /*//LOGIC for find duplicate entries
-            val ctime = time
-            val compareData = spn.substring(0, spn.indexOf(" ")).toInt()
-            val currentDiff = abs(ctime - compareData);
-
-            if (currentDiff > difference) {
-                shouldLogDifference = true
-                difference = currentDiff;
-            }
-            if (shouldLogDifference) {
-                Log.e(
-                    "Differences", "Data : $spn : : $ctime -- > $compareData"
-                )
-                shouldLogDifference = false
-            }*/
 
             //APPLY FILTER WITH DELIMITER
             stringBuilder.append(spn)
@@ -123,8 +144,9 @@ internal object UsbDataFiltering {
             val time = ++counter
             //Log.e(TAG, "receiveTransmittedData: " + command + " : " + System.currentTimeMillis() + "\tCounter : " + time)
             //usbHelperListener.onTransmission("Data : Stop -- " + spn + " : " + "\tData Length : " + spn.length() + "\tExact Length : " + time);
-        } else {
-            val time = ++counter;
+        } */
+        else {
+            /*val time = ++counter;
 
             //APPLY FILTER WITH DELIMITER
             stringBuilder.append(spn)
@@ -145,10 +167,12 @@ internal object UsbDataFiltering {
                     returnFilteredData(result, 0, result.size, "")
                     stringBuilder.delete(0, stringBuilder.length)
                 }
-            }
+            }*/
+
+            MainUsbSerialHelper.receivedData(spn.toString())
         }
 
-        /*//val cmd = MainUsbSerialHelper.currentCommand
+        /*
         //APPLY FILTER WITH DELIMITER
         stringBuilder.append(spn)
         if (stringBuilder.isNotEmpty() || stringBuilder.toString()
@@ -186,5 +210,13 @@ internal object UsbDataFiltering {
             Log.w(TAG, "returnDataToUser: Data ${result[i]} \tCounter : $time")
             MainUsbSerialHelper.receivedData(result[i])
         }
+    }
+
+    override fun decodeData(input: String): String {
+        //get input key from command
+        val inputKey = if (MainUsbSerialHelper.currentCommand.contains("RTU")) {
+            MainUsbSerialHelper.currentCommand.replace("RTU", "")
+        } else ""
+        return SpandanResponseDecoder(inputKey).decode(input)
     }
 }

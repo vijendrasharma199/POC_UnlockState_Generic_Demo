@@ -147,11 +147,11 @@
             android:layout_height="wrap_content"
             android:layout_alignParentBottom="true"
             android:layout_marginTop="10dp"
-            android:orientation="horizontal">
+            android:orientation="vertical">
 
             <Button
                 android:id="@+id/clearBtn"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:backgroundTint="@color/stop_color"
@@ -160,7 +160,14 @@
                 android:textAllCaps="false"
                 android:textSize="12sp" />
 
+            <Button
+                android:id="@+id/compute_data"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="compute"/>
+
         </LinearLayout>
+
 
     </RelativeLayout>
 </layout>
