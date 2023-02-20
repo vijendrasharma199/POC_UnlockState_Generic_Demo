@@ -23,6 +23,7 @@ object MainUsbSerialHelper {
     //Context
     private lateinit var context: Application
 
+    //AppCompatActivity
     private lateinit var activity: AppCompatActivity
 
     private var usbPermission = ConstantHelper.UsbPermission.Unknown
@@ -32,10 +33,10 @@ object MainUsbSerialHelper {
     //UsbDeviceConnection
     private var mConnection: UsbDeviceConnection? = null
 
-    //UsbOperation Class
+    //UsbSerialIoOperation
     private var usbSerialIOOperation: UsbSerialIOOperation? = null
 
-    //UsbSerialManager
+    //UsbSerialIoManager
     private var usbSerialIOManager: UsbSerialIOManager? = null
 
     //UsbHelperListener
@@ -43,6 +44,14 @@ object MainUsbSerialHelper {
 
     //current command
     internal var currentCommand = ""
+
+    //Device Config Parameters
+    internal var BAUD_RATE = 115200
+    internal var REQUEST_CODE = 0x22
+    internal var STOP_BIT = 0
+    internal var PARITY_BIT = 0x00
+    internal var DATA_BITS = 0x08
+    internal var DELIMITER = "Y"
 
     /**
      * BroadCast Receiver
@@ -91,10 +100,12 @@ object MainUsbSerialHelper {
         var device: UsbDevice? = null
         val usbManager = context.getSystemService(Context.USB_SERVICE) as UsbManager
         for (v in usbManager.deviceList.values) {
-            if (v.vendorId == ConstantHelper.spandanVendorId || v.vendorId == ConstantHelper.spandanVendorId1 || v.vendorId == ConstantHelper.spandanVendorId2) {
+            Log.w(TAG, "connect: Devices : ${v.vendorId}")
+            device = v
+            /*if (v.vendorId == ConstantHelper.spandanVendorId || v.vendorId == ConstantHelper.spandanVendorId1 || v.vendorId == ConstantHelper.spandanVendorId2) {
                 device = v
                 Log.e(TAG, "connect: connected_vendor_id : " + device.vendorId)
-            }
+            }*/
         }
 
         if (device == null) {
@@ -104,6 +115,7 @@ object MainUsbSerialHelper {
 
         //device connect
         usbHelperListener.onDeviceConnect()
+
         if (str == "T") {
             if (usbPermission == ConstantHelper.UsbPermission.Unknown && !usbManager.hasPermission(
                     device
@@ -120,16 +132,23 @@ object MainUsbSerialHelper {
                 usbManager.requestPermission(device, usbPermissionIntent)
                 return
             }
+
+            //open the device
             openDevice(usbManager, device)
         } else {
             //get parent activity lifecycle and add observer
             activity.lifecycle.addObserver(object : DefaultLifecycleObserver {
                 override fun onResume(owner: LifecycleOwner) {
                     super.onResume(owner)
-                    Log.w(TAG, "onResume of activity")
                     if (usbManager.hasPermission(device)) {
                         usbHelperListener.onDeviceConnect()
+
+                        //open the device
                         openDevice(usbManager, device)
+
+                        // remove observer
+                        activity.lifecycle.removeObserver(this)
+
                     } else {
                         usbHelperListener.onConnectionError(
                             "${ConstantHelper.ErrorCode.CONNECTION} : connection failed: permission denied"
@@ -138,29 +157,6 @@ object MainUsbSerialHelper {
                 }
             })
         }
-
-        /*//device connect
-        usbHelperListener.onDeviceConnect()
-
-        //check permission for usb connection
-        if (usbPermission == ConstantHelper.UsbPermission.Unknown && !usbManager.hasPermission(
-                device
-            )
-        ) {
-            usbPermission = ConstantHelper.UsbPermission.Requested
-            val flags =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
-            val usbPermissionIntent = PendingIntent.getBroadcast(
-                context, 0, Intent(
-                    INTENT_ACTION_GRANT_USB
-                ), flags
-            )
-            usbManager.requestPermission(device, usbPermissionIntent)
-            return
-        }
-
-        //open device and start serial manager
-        openDevice(usbManager, device)*/
     }
 
     /**
@@ -183,16 +179,14 @@ object MainUsbSerialHelper {
         //start the serial manager
         mConnection.let { connection ->
             if (connection != null) {
-                //initialize usbIOOperation
+                //init usbSerialIOOperation
                 usbSerialIOOperation = UsbSerialIOOperation(connection, device, usbHelperListener)
-                //initialize usbSerialIOManager
+                //init usbSerialIOManager
                 usbSerialIOOperation.let { usbOperation ->
                     if (usbOperation != null) {
                         usbSerialIOManager = UsbSerialIOManager(usbOperation, usbHelperListener)
                         //launch coroutine
-                        usbSerialIOManager.let { usbSerialManager ->
-                            usbSerialManager?.start()
-                        }
+                        usbSerialIOManager.let { usbSerialManager -> usbSerialManager?.start() }
                     }
                 }
             } else {
@@ -207,19 +201,14 @@ object MainUsbSerialHelper {
     /**
      * Disconnect
      */
-    internal fun disconnect() {
+    private fun disconnect() {
         Log.e(TAG, "Device has been disconnected...")
 
         //stop UsbSerialIOManager
-        usbSerialIOManager.let {
-            it?.stop()
-        }
+        usbSerialIOManager.let { it?.stop() }
 
-
-        //release Interface of usbSerialIOOperation
-        usbSerialIOOperation.let {
-            it?.releaseControl()
-        }
+        //clear UsbSerialIOOperation
+        usbSerialIOOperation.let { it?.releaseControl() }
 
         //close the connection
         mConnection.let { connection ->
@@ -250,10 +239,7 @@ object MainUsbSerialHelper {
         try {
             currentCommand = str
             //write data
-            //usbSerialIOOperation.write(str, 2000)
-            usbSerialIOOperation.let { usbOperation ->
-                usbOperation?.write(str, 2000)
-            }
+            usbSerialIOOperation.let { usbOperation -> usbOperation?.write(str, 2000) }
         } catch (e: Exception) {
             Log.e(TAG, "send: Write method : " + e.message)
             usbHelperListener.onConnectionError("${ConstantHelper.ErrorCode.CONNECTION} : ${e.message}")
@@ -287,13 +273,43 @@ object MainUsbSerialHelper {
         Log.w(TAG, "initialize: $context")
         MainUsbSerialHelper.context = context.applicationContext as Application
 
-        //initialize registers
+        //init registers
         initRegister()
+    }
+
+    //Device Config Methods
+    @JvmStatic
+    fun setBaudRate(baudRate: Int = 115200) {
+        BAUD_RATE = baudRate
+    }
+
+    @JvmStatic
+    fun setDataBits(dataBits: Int = 0x08) {
+        DATA_BITS = dataBits
+    }
+
+    @JvmStatic
+    fun setStopBit(stopBit: Int = 0) {
+        STOP_BIT = stopBit
+    }
+
+    @JvmStatic
+    fun setParity(parityBit: Int = 0x00) {
+        PARITY_BIT = parityBit
+    }
+
+    @JvmStatic
+    fun setRequestCode(requestCode: Int = 0x22) {
+        REQUEST_CODE = requestCode
+    }
+
+    @JvmStatic
+    fun applyDelimiter(delimiter: String) {
+        DELIMITER = delimiter
     }
 
     @JvmStatic
     fun setDeviceCallback(usbHelperListener: UsbHelperListener?, activity: AppCompatActivity?) {
-        //initialize usbHelperListener
         if (usbHelperListener != null) {
             MainUsbSerialHelper.usbHelperListener = usbHelperListener
         }
@@ -303,9 +319,8 @@ object MainUsbSerialHelper {
         }
 
         //check for permission and connect
-        if (usbPermission == ConstantHelper.UsbPermission.Unknown || usbPermission == ConstantHelper.UsbPermission.Granted) {
+        if (usbPermission == ConstantHelper.UsbPermission.Unknown || usbPermission == ConstantHelper.UsbPermission.Granted)
             connect("T")
-        }
     }
 
     @JvmStatic

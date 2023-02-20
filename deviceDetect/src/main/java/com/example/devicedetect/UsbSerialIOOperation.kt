@@ -11,7 +11,7 @@ class UsbSerialIOOperation constructor(
     connection: UsbDeviceConnection, device: UsbDevice, usbHelperListener: UsbHelperListener
 ) {
 
-    private var TAG = "USB_OPERATION_HELPER"
+    private var TAG = javaClass.simpleName
 
     //UsbDeviceConnection
     private var mConnection: UsbDeviceConnection? = null
@@ -60,7 +60,7 @@ class UsbSerialIOOperation constructor(
         if (mConnection == null) {
             throw IOException("Connection closed")
         } else {
-            //initialize command
+            //init command
             command = cmd
 
             val src = cmd.toByteArray()
@@ -152,14 +152,14 @@ class UsbSerialIOOperation constructor(
                     }
                 }
 
-                val buf = byteArrayOf(
+                /*val buf = byteArrayOf(
                     (ConstantHelper.BAUD_RATE and 0xff).toByte(),
                     (ConstantHelper.BAUD_RATE shr 8 and 0xff).toByte(),
                     (ConstantHelper.BAUD_RATE shr 16 and 0xff).toByte(),
                     (ConstantHelper.BAUD_RATE shr 24 and 0xff).toByte(),
-                    0,//Stop Bits
-                    0x00,//Parity Bits
-                    0x08//Data Bits
+                    ConstantHelper.STOP_BIT.toByte(),//Stop Bits
+                    ConstantHelper.PARITY_BIT.toByte(),//Parity Bits
+                    ConstantHelper.DATA_BIT.toByte()//Data Bits
                 )
 
                 val result: Int
@@ -184,6 +184,30 @@ class UsbSerialIOOperation constructor(
                         0
                     )
                 }
+                Log.w(
+                    TAG, "Control Transfer Result : $result"
+                )
+                */
+
+                val buf = byteArrayOf(
+                    (MainUsbSerialHelper.BAUD_RATE and 0xff).toByte(),
+                    (MainUsbSerialHelper.BAUD_RATE shr 8 and 0xff).toByte(),
+                    (MainUsbSerialHelper.BAUD_RATE shr 16 and 0xff).toByte(),
+                    (MainUsbSerialHelper.BAUD_RATE shr 24 and 0xff).toByte(),
+                    MainUsbSerialHelper.STOP_BIT.toByte(),//Stop Bits
+                    MainUsbSerialHelper.PARITY_BIT.toByte(),//Parity Bits
+                    MainUsbSerialHelper.DATA_BITS.toByte()//Data Bits
+                )
+
+                val result: Int = connection.controlTransfer(
+                    UsbConstants.USB_TYPE_CLASS or 0x01,
+                    MainUsbSerialHelper.REQUEST_CODE,//0x22 or 0x20
+                    0,
+                    mControlIndex,
+                    buf,
+                    buf.size,
+                    0
+                )
                 Log.w(
                     TAG, "Control Transfer Result : $result"
                 )

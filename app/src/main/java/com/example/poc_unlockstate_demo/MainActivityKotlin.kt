@@ -81,16 +81,12 @@ class MainActivityKotlin : AppCompatActivity() {
             rtuDataSet.lines().forEachIndexed { index, s ->
                 Log.d(TAG, "onResume: $index")
                 if (index in 4..7) {
-                    if(index==4)
-                    decoder
-                        .decodeResponseDid(s).let {
-                            Log.d(TAG, "onResume did: ${it}")
-                        }
-                    else if(index == 5)
-                        decoder
-                            .decodeResponseMid(s).let {
-                                Log.d(TAG, "onResume mid: $it")
-                            }
+                    if (index == 4) decoder.decodeResponseDid(s).let {
+                        Log.d(TAG, "onResume did: ${it}")
+                    }
+                    else if (index == 5) decoder.decodeResponseMid(s).let {
+                        Log.d(TAG, "onResume mid: $it")
+                    }
                 }
             }
         }
@@ -105,6 +101,7 @@ class MainActivityKotlin : AppCompatActivity() {
     private fun useModule(message: String) {
         arraylist.clear()
 
+        //MainUsbSerialHelper.applyDelimiter("Q")
         MainUsbSerialHelper.setDeviceCallback(object : UsbHelperListener {
             override fun onDeviceConnect() {
                 Log.d(TAG, "Activity : Device Connected...")
@@ -130,11 +127,11 @@ class MainActivityKotlin : AppCompatActivity() {
                     binding.receivedTextTv.append("Received : $data\n")
                 }
                 rtuDataSet.append(data)
-                arraylist.add(data)
+                /*arraylist.add(data)
                 if (arraylist.size % divideBy == 0) {
                     var size = arraylist.size
                     runOnUiThread { binding.receivedTextTv.append("Received : $data : Size of List : $size\n") }
-                }
+                }*/
             }
 
             override fun onDeviceDisconnect() {

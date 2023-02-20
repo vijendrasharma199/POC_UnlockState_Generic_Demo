@@ -17,8 +17,11 @@ internal object UsbDataFiltering : DataFilterInterface {
      * @param data = device response data( in ByteArray)
      */
     fun getRawDataAnApplyFilter(data: ByteArray) {
+
         val spn = SpannableStringBuilder()
         if (data.isNotEmpty()) spn.append(String(data))
+
+        //get Current Command
         val currentCommand = MainUsbSerialHelper.currentCommand
 
         if (currentCommand.contains("RTU")) {
@@ -78,21 +81,12 @@ internal object UsbDataFiltering : DataFilterInterface {
                 val startResponse = stringBuilder.substring(0 + 191, 7 + 191)//Get Device Id
                 val deviceId = stringBuilder.substring(7 + 191, 39 + 191)//Get Device Id
                 val microControllerId = stringBuilder.substring(39 + 191, 63 + 191)//Get MID
-                deviceHashValue =
-                    stringBuilder.substring(63 + 191, stringBuilder.length)//Get Device HashValue
+                deviceHashValue = stringBuilder.substring(63 + 191, stringBuilder.length)//Get Device HashValue
 
-                Log.w(
-                    TAG,
-                    "getRawDataAnApplyFilter: $startResponse\n$deviceId\n$microControllerId\n$deviceHashValue"
-                )
+                Log.w(TAG, "getRawDataAnApplyFilter: $startResponse\n$deviceId\n$microControllerId\n$deviceHashValue")
+
                 //set data to user
-                MainUsbSerialHelper.receivedData(
-                    "$startResponse\n${decodeData(deviceId)}\n${
-                        decodeData(
-                            microControllerId
-                        )
-                    }\n$deviceHashValue"
-                )
+                MainUsbSerialHelper.receivedData("$startResponse\n${decodeData(deviceId)}\n${decodeData(microControllerId)}\n$deviceHashValue")
                 stringBuilder.setLength(0)
             }
         }
