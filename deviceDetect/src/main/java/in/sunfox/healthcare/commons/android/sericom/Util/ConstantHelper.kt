@@ -1,15 +1,11 @@
-package com.example.devicedetect.Util
+package `in`.sunfox.healthcare.commons.android.sericom.Util
 
-import com.example.devicedetect.MainUsbSerialHelper
 import java.math.BigInteger
 import java.nio.charset.StandardCharsets
 import java.security.MessageDigest
 import java.security.NoSuchAlgorithmException
 
 object ConstantHelper {
-    internal val DELIMITER = MainUsbSerialHelper.DELIMITER
-
-    //ENUM Class
     internal enum class UsbPermission {
         Unknown, Requested, Granted, Denied
     }
@@ -18,7 +14,6 @@ object ConstantHelper {
         AUTHENTICATION, CONNECTION, ENDPOINT, USB_REQUEST, DATA
     }
 
-    //Functions
     @Throws(NoSuchAlgorithmException::class)
     internal fun getSHA(input: String): ByteArray? {
         val md = MessageDigest.getInstance("SHA-256")

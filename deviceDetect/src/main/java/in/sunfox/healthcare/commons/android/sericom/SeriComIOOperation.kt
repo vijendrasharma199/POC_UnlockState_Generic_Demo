@@ -1,15 +1,17 @@
-package com.example.devicedetect
+package `in`.sunfox.healthcare.commons.android.sericom
 
 import android.hardware.usb.*
 import android.util.Log
-import com.example.devicedetect.Util.ConstantHelper
-import com.example.devicedetect.interfaces.UsbHelperListener
+import `in`.sunfox.healthcare.commons.android.sericom.Util.ConstantHelper
+import `in`.sunfox.healthcare.commons.android.sericom.interfaces.OnConnectionStateChangeListener
 import java.io.IOException
 import java.nio.ByteBuffer
 import kotlin.math.max
 
-class UsbSerialIOOperation constructor(
-    connection: UsbDeviceConnection, device: UsbDevice, usbHelperListener: UsbHelperListener
+class SeriComIOOperation constructor(
+    connection: UsbDeviceConnection,
+    device: UsbDevice,
+    onConnectionStateChangeListener: OnConnectionStateChangeListener
 ) {
 
     private var TAG = javaClass.simpleName
@@ -18,7 +20,7 @@ class UsbSerialIOOperation constructor(
     private var mConnection: UsbDeviceConnection? = null
 
     //UsbHelperListener
-    private var mUsbListener: UsbHelperListener
+    private var listener: OnConnectionStateChangeListener
 
     //UsbDevice
     private var device: UsbDevice
@@ -44,7 +46,7 @@ class UsbSerialIOOperation constructor(
 
     init {
         this.mConnection = connection
-        this.mUsbListener = usbHelperListener
+        this.listener = onConnectionStateChangeListener
         this.device = device
 
         //getInterfacesAndEndpoints
@@ -68,7 +70,7 @@ class UsbSerialIOOperation constructor(
             mConnection.let { connection ->
                 connection?.bulkTransfer(mWriteEndpoint, src, src.size, timeout) ?: {
                     Log.e(TAG, "write: Connection is null")
-                    mUsbListener.onConnectionError("${ConstantHelper.ErrorCode.CONNECTION} : Connection is null")
+                    listener.onConnectionError("${ConstantHelper.ErrorCode.CONNECTION} : Connection is null")
                 }
             }
         }
@@ -93,7 +95,7 @@ class UsbSerialIOOperation constructor(
                 }
             } else {
                 Log.e(TAG, "read: UsbRequest is Null")
-                mUsbListener.onConnectionError("${ConstantHelper.ErrorCode.USB_REQUEST} : UsbRequest is null")
+                listener.onConnectionError("${ConstantHelper.ErrorCode.USB_REQUEST} : UsbRequest is null")
             }
         }
         mConnection.let { connection ->
@@ -101,7 +103,7 @@ class UsbSerialIOOperation constructor(
                 connection.requestWait() ?: throw IOException("Waiting for USB request failed")
             } else {
                 Log.e(TAG, "read: Connection is null")
-                mUsbListener.onConnectionError("${ConstantHelper.ErrorCode.CONNECTION} : Connection is null")
+                listener.onConnectionError("${ConstantHelper.ErrorCode.CONNECTION} : Connection is null")
             }
         }
         nread = buf.position()
@@ -134,7 +136,7 @@ class UsbSerialIOOperation constructor(
             if (connection != null) {
                 if (!connection.claimInterface(mControlInterface, true)) {
                     Log.w(TAG, "findInterfaceOfDevice: Could not claim data interface")
-                    mUsbListener.onConnectionError("${ConstantHelper.ErrorCode.ENDPOINT} : Could not claim data interface")
+                    listener.onConnectionError("${ConstantHelper.ErrorCode.ENDPOINT} : Could not claim data interface")
                     return
                 }
 
@@ -149,7 +151,7 @@ class UsbSerialIOOperation constructor(
                         }
                     } else {
                         Log.e(TAG, "Control Interface is null")
-                        mUsbListener.onConnectionError("${ConstantHelper.ErrorCode.ENDPOINT} : Control Interface is null")
+                        listener.onConnectionError("${ConstantHelper.ErrorCode.ENDPOINT} : Control Interface is null")
                     }
                 }
 
@@ -190,24 +192,23 @@ class UsbSerialIOOperation constructor(
                 )
                 */
 
+                Log.w(
+                    TAG,
+                    "getRequiredInterfacesAndEndpointsOfDevice: " + "\nBAUD_RATE: ${SeriCom.BAUD_RATE}" + "\nDATA_BIT: ${SeriCom.DATA_BITS}" + "\nSTOP_BIT: ${SeriCom.STOP_BIT}" + "\nPARITY_BIT: ${SeriCom.PARITY_BIT}" + "\nREQUEST_CODE: ${SeriCom.REQUEST_CODE}"
+                )
                 val buf = byteArrayOf(
-                    (MainUsbSerialHelper.BAUD_RATE and 0xff).toByte(),
-                    (MainUsbSerialHelper.BAUD_RATE shr 8 and 0xff).toByte(),
-                    (MainUsbSerialHelper.BAUD_RATE shr 16 and 0xff).toByte(),
-                    (MainUsbSerialHelper.BAUD_RATE shr 24 and 0xff).toByte(),
-                    MainUsbSerialHelper.STOP_BIT.toByte(),//Stop Bits
-                    MainUsbSerialHelper.PARITY_BIT.toByte(),//Parity Bits
-                    MainUsbSerialHelper.DATA_BITS.toByte()//Data Bits
+                    (SeriCom.BAUD_RATE and 0xff).toByte(),
+                    (SeriCom.BAUD_RATE shr 8 and 0xff).toByte(),
+                    (SeriCom.BAUD_RATE shr 16 and 0xff).toByte(),
+                    (SeriCom.BAUD_RATE shr 24 and 0xff).toByte(),
+                    SeriCom.STOP_BIT.toByte(),//Stop Bits
+                    SeriCom.PARITY_BIT.toByte(),//Parity Bits
+                    SeriCom.DATA_BITS.toByte()//Data Bits
                 )
 
                 val result: Int = connection.controlTransfer(
-                    UsbConstants.USB_TYPE_CLASS or 0x01,
-                    MainUsbSerialHelper.REQUEST_CODE,//0x22 or 0x20
-                    0,
-                    mControlIndex,
-                    buf,
-                    buf.size,
-                    0
+                    UsbConstants.USB_TYPE_CLASS or 0x01, SeriCom.REQUEST_CODE,//0x22 or 0x20
+                    0, mControlIndex, buf, buf.size, 0
                 )
                 Log.w(
                     TAG, "Control Transfer Result : $result"
@@ -223,7 +224,7 @@ class UsbSerialIOOperation constructor(
                             if (usbRequest != null) {
                                 usbRequest.initialize(connection, mReadEndpoint)
                             } else {
-                                mUsbListener.onConnectionError("${ConstantHelper.ErrorCode.USB_REQUEST} : UsbRequest is null")
+                                listener.onConnectionError("${ConstantHelper.ErrorCode.USB_REQUEST} : UsbRequest is null")
                                 Log.e(
                                     TAG,
                                     "getRequiredInterfacesAndEndpointsOfDevice: UsbRequest is null"
@@ -232,12 +233,12 @@ class UsbSerialIOOperation constructor(
                         }
                     } else {
                         Log.e(TAG, "ReadEndPoint is null")
-                        mUsbListener.onConnectionError("${ConstantHelper.ErrorCode.ENDPOINT} : ReadEndPoint is null")
+                        listener.onConnectionError("${ConstantHelper.ErrorCode.ENDPOINT} : ReadEndPoint is null")
                     }
                 }
             } else {
                 Log.e(TAG, "Connection is null")
-                mUsbListener.onConnectionError("${ConstantHelper.ErrorCode.CONNECTION} : Connection is null")
+                listener.onConnectionError("${ConstantHelper.ErrorCode.CONNECTION} : Connection is null")
             }
         }
     }
@@ -257,7 +258,7 @@ class UsbSerialIOOperation constructor(
             if (connection != null) connection.releaseInterface(mControlInterface)
             else {
                 Log.e(TAG, "releaseControl: Connection is null")
-                mUsbListener.onConnectionError("${ConstantHelper.ErrorCode.CONNECTION} : Connection is null")
+                listener.onConnectionError("${ConstantHelper.ErrorCode.CONNECTION} : Connection is null")
             }
         }
     }

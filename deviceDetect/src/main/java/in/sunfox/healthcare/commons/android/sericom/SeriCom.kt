@@ -1,4 +1,4 @@
-package com.example.devicedetect
+package `in`.sunfox.healthcare.commons.android.sericom
 
 import android.app.Application
 import android.app.PendingIntent
@@ -14,12 +14,12 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
-import com.example.devicedetect.Util.ConstantHelper
-import com.example.devicedetect.interfaces.UsbHelperListener
+import `in`.sunfox.healthcare.commons.android.sericom.Util.ConstantHelper
+import `in`.sunfox.healthcare.commons.android.sericom.interfaces.OnConnectionStateChangeListener
 
-object MainUsbSerialHelper {
+object SeriCom {
 
-    private var TAG = "USB_COMMUNICATION_HELPER"
+    private var TAG = javaClass.simpleName
 
     //Context
     private lateinit var context: Application
@@ -35,13 +35,13 @@ object MainUsbSerialHelper {
     private var mConnection: UsbDeviceConnection? = null
 
     //UsbSerialIoOperation
-    private var usbSerialIOOperation: UsbSerialIOOperation? = null
+    private var seriComIOOperation: SeriComIOOperation? = null
 
     //UsbSerialIoManager
-    private var usbSerialIOManager: UsbSerialIOManager? = null
+    private var seriComIOManager: SeriComIOManager? = null
 
     //UsbHelperListener
-    private lateinit var usbHelperListener: UsbHelperListener
+    private lateinit var onConnectionStateChangeListener: OnConnectionStateChangeListener
 
     //current command
     internal var currentCommand = ""
@@ -72,7 +72,7 @@ object MainUsbSerialHelper {
             }
             if (UsbManager.ACTION_USB_DEVICE_ATTACHED == action) {
                 Log.d(TAG, "Device Connected...")
-                usbHelperListener.onDeviceConnect()
+                onConnectionStateChangeListener.onDeviceConnect()
                 connect("F")
             }
             if (UsbManager.ACTION_USB_DEVICE_DETACHED == action) {
@@ -110,12 +110,12 @@ object MainUsbSerialHelper {
         }
 
         if (device == null) {
-            usbHelperListener.onConnectionError("${ConstantHelper.ErrorCode.CONNECTION} : connection failed: device not found")
+            onConnectionStateChangeListener.onConnectionError("${ConstantHelper.ErrorCode.CONNECTION} : connection failed: device not found")
             return
         }
 
         //device connect
-        usbHelperListener.onDeviceConnect()
+        onConnectionStateChangeListener.onDeviceConnect()
 
         if (str == "T") {
             if (usbPermission == ConstantHelper.UsbPermission.Unknown && !usbManager.hasPermission(
@@ -142,7 +142,7 @@ object MainUsbSerialHelper {
                 override fun onResume(owner: LifecycleOwner) {
                     super.onResume(owner)
                     if (usbManager.hasPermission(device)) {
-                        usbHelperListener.onDeviceConnect()
+                        onConnectionStateChangeListener.onDeviceConnect()
 
                         //open the device
                         openDevice(usbManager, device)
@@ -151,7 +151,7 @@ object MainUsbSerialHelper {
                         activity.lifecycle.removeObserver(this)
 
                     } else {
-                        usbHelperListener.onConnectionError(
+                        onConnectionStateChangeListener.onConnectionError(
                             "${ConstantHelper.ErrorCode.CONNECTION} : connection failed: permission denied"
                         )
                     }
@@ -168,10 +168,10 @@ object MainUsbSerialHelper {
     private fun openDevice(usbManager: UsbManager, device: UsbDevice) {
         val usbConnection = usbManager.openDevice(device)
         if (usbConnection == null) {
-            if (!usbManager.hasPermission(device)) usbHelperListener.onConnectionError(
+            if (!usbManager.hasPermission(device)) onConnectionStateChangeListener.onConnectionError(
                 "${ConstantHelper.ErrorCode.CONNECTION} : connection failed: permission denied"
             )
-            else usbHelperListener.onConnectionError(
+            else onConnectionStateChangeListener.onConnectionError(
                 "${ConstantHelper.ErrorCode.CONNECTION} : connection failed: open failed"
             )
             return
@@ -180,19 +180,21 @@ object MainUsbSerialHelper {
         //start the serial manager
         mConnection.let { connection ->
             if (connection != null) {
-                //init usbSerialIOOperation
-                usbSerialIOOperation = UsbSerialIOOperation(connection, device, usbHelperListener)
-                //init usbSerialIOManager
-                usbSerialIOOperation.let { usbOperation ->
+                //init seriComIOOperation
+                seriComIOOperation =
+                    SeriComIOOperation(connection, device, onConnectionStateChangeListener)
+                //init seriComIOManager
+                seriComIOOperation.let { usbOperation ->
                     if (usbOperation != null) {
-                        usbSerialIOManager = UsbSerialIOManager(usbOperation, usbHelperListener)
+                        seriComIOManager =
+                            SeriComIOManager(usbOperation, onConnectionStateChangeListener)
                         //launch coroutine
-                        usbSerialIOManager.let { usbSerialManager -> usbSerialManager?.start() }
+                        seriComIOManager.let { usbSerialManager -> usbSerialManager?.start() }
                     }
                 }
             } else {
                 Log.e(TAG, "Connection is null")
-                usbHelperListener.onConnectionError(
+                onConnectionStateChangeListener.onConnectionError(
                     "${ConstantHelper.ErrorCode.CONNECTION} : Connection is null"
                 )
             }
@@ -206,16 +208,16 @@ object MainUsbSerialHelper {
         Log.e(TAG, "Device has been disconnected...")
 
         //stop UsbSerialIOManager
-        usbSerialIOManager.let { it?.stop() }
+        seriComIOManager.let { it?.stop() }
 
         //clear UsbSerialIOOperation
-        usbSerialIOOperation.let { it?.releaseControl() }
+        seriComIOOperation.let { it?.releaseControl() }
 
         //close the connection
         mConnection.let { connection ->
             connection?.close() ?: {
                 Log.e(TAG, "disconnect: Connection is null")
-                usbHelperListener.onConnectionError("${ConstantHelper.ErrorCode.CONNECTION} : Connection is null")
+                onConnectionStateChangeListener.onConnectionError("${ConstantHelper.ErrorCode.CONNECTION} : Connection is null")
             }
         }
 
@@ -223,7 +225,7 @@ object MainUsbSerialHelper {
         usbPermission = ConstantHelper.UsbPermission.Unknown
 
         //notify user to device disconnect
-        usbHelperListener.onDeviceDisconnect()
+        onConnectionStateChangeListener.onDeviceDisconnect()
 
         //unregister receiver
         //context.unregisterReceiver(usbReceiver)
@@ -240,10 +242,10 @@ object MainUsbSerialHelper {
         try {
             currentCommand = str
             //write data
-            usbSerialIOOperation.let { usbOperation -> usbOperation?.write(str, 2000) }
+            seriComIOOperation.let { usbOperation -> usbOperation?.write(str, 2000) }
         } catch (e: Exception) {
             Log.e(TAG, "send: Write method : " + e.message)
-            usbHelperListener.onConnectionError("${ConstantHelper.ErrorCode.CONNECTION} : ${e.message}")
+            onConnectionStateChangeListener.onConnectionError("${ConstantHelper.ErrorCode.CONNECTION} : ${e.message}")
         }
     }
 
@@ -252,15 +254,15 @@ object MainUsbSerialHelper {
      */
     internal fun receivedData(str: String, command: String = "") {
         if (command.isNotEmpty()) send(command)
-        else usbHelperListener.onReceivedData(str)
+        else onConnectionStateChangeListener.onReceivedData(str)
     }
 
     /**
      * deviceVerificationState
      */
     internal fun setDeviceVerificationState(isVerified: Boolean, status: String) {
-        if (isVerified) usbHelperListener.onDeviceVerified()
-        else usbHelperListener.onConnectionError(
+        if (isVerified) onConnectionStateChangeListener.onDeviceVerified()
+        else onConnectionStateChangeListener.onConnectionError(
             "${ConstantHelper.ErrorCode.AUTHENTICATION} : $status"
         )
     }
@@ -272,7 +274,7 @@ object MainUsbSerialHelper {
     fun initialize(context: Context) {
         //initialize
         Log.w(TAG, "initialize: $context")
-        MainUsbSerialHelper.context = context.applicationContext as Application
+        SeriCom.context = context.applicationContext as Application
 
         //init registers
         initRegister()
@@ -285,7 +287,7 @@ object MainUsbSerialHelper {
     }
 
     @JvmStatic
-    fun setDataBits(dataBits: Int = 0x08) {
+    fun setDataBit(dataBits: Int = 0x08) {
         DATA_BITS = dataBits
     }
 
@@ -305,18 +307,21 @@ object MainUsbSerialHelper {
     }
 
     @JvmStatic
-    fun applyDelimiter(delimiter: String) {
+    fun setDelimiter(delimiter: String) {
         DELIMITER = delimiter
     }
 
     @JvmStatic
-    fun setDeviceCallback(usbHelperListener: UsbHelperListener?, activity: AppCompatActivity?) {
-        if (usbHelperListener != null) {
-            MainUsbSerialHelper.usbHelperListener = usbHelperListener
+    fun setConnectionChangeListener(
+        onConnectionStateChangeListener: OnConnectionStateChangeListener?,
+        activity: AppCompatActivity?
+    ) {
+        if (onConnectionStateChangeListener != null) {
+            SeriCom.onConnectionStateChangeListener = onConnectionStateChangeListener
         }
 
         if (activity != null) {
-            MainUsbSerialHelper.activity = activity
+            SeriCom.activity = activity
         }
 
         //check for permission and connect

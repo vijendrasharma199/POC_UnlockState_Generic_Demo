@@ -1,4 +1,4 @@
-package com.example.devicedetect.Util
+package `in`.sunfox.healthcare.commons.android.sericom.Util
 
 import android.util.Log
 

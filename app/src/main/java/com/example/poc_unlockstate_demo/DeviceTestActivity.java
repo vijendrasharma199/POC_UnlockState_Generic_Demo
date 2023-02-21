@@ -16,8 +16,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.devicedetect.MainUsbSerialHelper;
-import com.example.devicedetect.interfaces.UsbHelperListener;
+import in.sunfox.healthcare.commons.android.sericom.SeriCom;
+import in.sunfox.healthcare.commons.android.sericom.interfaces.OnConnectionStateChangeListener;
 import com.example.poc_unlockstate_demo.databinding.ActivityDeviceTestBinding;
 
 import java.io.File;
@@ -162,7 +162,7 @@ public class DeviceTestActivity extends AppCompatActivity {
         String finalDirectoryPath = directoryPath;
         Thread thread = new Thread(() -> {
             //helper.startTransmission("1");
-            MainUsbSerialHelper.sendCommand("1");
+            SeriCom.sendCommand("1");
 
             runOnUiThread(() -> binding.receivedTextTv.append(Html.fromHtml(String.format("<br/><b>%d</b> test running out of <b>%d</b> with Duration of <b>%d</b> seconds.<br/>", i, testArray.length, timerInSeconds))));
             Log.i(TAG, i + " test running out of " + testArray.length + "\nDuration : " + timerInSeconds + "seconds.\n");
@@ -173,7 +173,7 @@ public class DeviceTestActivity extends AppCompatActivity {
                 Log.e(TAG, "run: " + e);
                 showToast(e.toString());
             }
-            MainUsbSerialHelper.sendCommand("0");
+            SeriCom.sendCommand("0");
 
             int size = mainList.size();
             runOnUiThread(() -> binding.receivedTextTv.append(Html.fromHtml(String.format("<b>%s</b> test finished<br/>Last Data : <b>%s</b><br/>Size of List : <b>%d</b><br/>", testName, mainList.get(size - 1), size))));
@@ -238,7 +238,7 @@ public class DeviceTestActivity extends AppCompatActivity {
     }*/
 
     private void useModule() {
-        MainUsbSerialHelper.setDeviceCallback(new UsbHelperListener() {
+        SeriCom.setConnectionChangeListener(new OnConnectionStateChangeListener() {
             @Override
             public void onDeviceConnect() {
                 Log.d(TAG, "Activity : Device Connected...");

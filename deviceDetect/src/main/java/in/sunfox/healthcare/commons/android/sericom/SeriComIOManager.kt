@@ -1,23 +1,23 @@
-package com.example.devicedetect
+package `in`.sunfox.healthcare.commons.android.sericom
 
 import android.text.SpannableStringBuilder
 import android.util.Log
-import com.example.devicedetect.Util.ConstantHelper
-import com.example.devicedetect.interfaces.UsbHelperListener
+import `in`.sunfox.healthcare.commons.android.sericom.Util.ConstantHelper
+import `in`.sunfox.healthcare.commons.android.sericom.interfaces.OnConnectionStateChangeListener
 import kotlinx.coroutines.*
 import java.nio.ByteBuffer
 
-class UsbSerialIOManager(
-    usbSerialIOOperation: UsbSerialIOOperation, usbListener: UsbHelperListener
+class SeriComIOManager(
+    seriComIOOperation: SeriComIOOperation, listener: OnConnectionStateChangeListener
 ) {
 
-    private var TAG = "USB_COMMUNICATION_HELPER"
+    private var TAG = javaClass.simpleName
 
     //UsbSerialIoOperation
-    private var usbSerialIOOperation: UsbSerialIOOperation
+    private var seriComIOOperation: SeriComIOOperation
 
     //UsbListener
-    private var mUsbListener: UsbHelperListener
+    private var listener: OnConnectionStateChangeListener
 
     //ReadBuffer
     private var mReadBuffer: ByteBuffer? = null
@@ -29,11 +29,12 @@ class UsbSerialIOManager(
     private var counter: Int = 0
     private var stringBuilder = StringBuilder()
 
+
     //init block
     init {
-        this.mUsbListener = usbListener
-        this.usbSerialIOOperation = usbSerialIOOperation
-        this.mReadBuffer = usbSerialIOOperation.getReadBuffer()
+        this.listener = listener
+        this.seriComIOOperation = seriComIOOperation
+        this.mReadBuffer = seriComIOOperation.getReadBuffer()
     }
 
     /**
@@ -79,7 +80,7 @@ class UsbSerialIOManager(
                             mReadBuffer.let { readBuffer ->
                                 if (readBuffer != null) {
                                     val buffer: ByteArray? = readBuffer.array()
-                                    val len = usbSerialIOOperation.read(buffer)
+                                    val len = seriComIOOperation.read(buffer)
                                     if (len > 0) {
                                         val data = ByteArray(len)
                                         System.arraycopy(buffer, 0, data, 0, len)
@@ -89,7 +90,7 @@ class UsbSerialIOManager(
                                         //receiveRawDataAndApplyFilter(data)
 
                                         //send data for filtering
-                                        UsbDataFiltering.getRawDataAnApplyFilter(data)
+                                        SeriComDataFiltering.getRawDataAnApplyFilter(data)
 
                                     } else {
                                         Log.e(TAG, "launchCoroutine: Len is less than 0")
@@ -105,7 +106,7 @@ class UsbSerialIOManager(
                 }
             } else {
                 Log.e(TAG, "launchCoroutine: Coroutine Job is null")
-                mUsbListener.onConnectionError("${ConstantHelper.ErrorCode.DATA} : Coroutine job is null")
+                listener.onConnectionError("${ConstantHelper.ErrorCode.DATA} : Coroutine job is null")
             }
         }
     }
@@ -115,27 +116,24 @@ class UsbSerialIOManager(
      * @param data = bytearray data
      */
     private fun receiveRawDataAndApplyFilter(data: ByteArray) {
-
         val spn = SpannableStringBuilder()
         if (data.isNotEmpty()) spn.append(String(data))
 
         //val cmd = "command"
-        val cmd = MainUsbSerialHelper.currentCommand
+        val cmd = SeriCom.currentCommand
 
         //APPLY FILTER WITH DELIMITER
         stringBuilder.append(spn)
-        if (stringBuilder.isNotEmpty() || (stringBuilder.toString()
-                .contains(ConstantHelper.DELIMITER))
-        ) {
-            val result = stringBuilder.toString().split(ConstantHelper.DELIMITER).toTypedArray()
+        if (stringBuilder.isNotEmpty() || (stringBuilder.toString().contains(SeriCom.DELIMITER))) {
+            val result = stringBuilder.toString().split(SeriCom.DELIMITER).toTypedArray()
             val lastElementOfResult = result[result.size - 1]
             val lastElementOfBuilder = stringBuilder.substring(
-                stringBuilder.lastIndexOf(ConstantHelper.DELIMITER) + 1, stringBuilder.length
+                stringBuilder.lastIndexOf(SeriCom.DELIMITER) + 1, stringBuilder.length
             )
             if (lastElementOfResult == lastElementOfBuilder) {
                 returnFilteredData(result, 0, result.size - 1, cmd)
                 stringBuilder.delete(
-                    0, stringBuilder.lastIndexOf(ConstantHelper.DELIMITER) + 1
+                    0, stringBuilder.lastIndexOf(SeriCom.DELIMITER) + 1
                 )
             } else {
                 returnFilteredData(result, 0, result.size, cmd)
@@ -156,7 +154,7 @@ class UsbSerialIOManager(
         for (i in start until end) {
             val time = ++counter
             Log.w(TAG, "returnDataToUser: Data ${result[i]} \tCounter : $time")
-            MainUsbSerialHelper.receivedData(result[i])
+            SeriCom.receivedData(result[i])
             //UsbDataFiltering.getRawDataAnApplyFilter(result[i])
         }
     }

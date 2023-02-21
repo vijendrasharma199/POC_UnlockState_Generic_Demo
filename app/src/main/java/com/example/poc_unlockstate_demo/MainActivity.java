@@ -13,8 +13,8 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.example.devicedetect.MainUsbSerialHelper;
-import com.example.devicedetect.interfaces.UsbHelperListener;
+import in.sunfox.healthcare.commons.android.sericom.SeriCom;
+import in.sunfox.healthcare.commons.android.sericom.interfaces.OnConnectionStateChangeListener;
 
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -56,7 +56,7 @@ public class MainActivity extends AppCompatActivity {
         releaseBtn.setOnClickListener(v -> {
             try {
                 //helper.removeInstance();
-                MainUsbSerialHelper.clearInstance();
+                SeriCom.clearInstance();
             } catch (Exception e) {
                 Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
             }
@@ -69,7 +69,7 @@ public class MainActivity extends AppCompatActivity {
         String cmd = cmdEt.getText().toString().trim();
         if (!TextUtils.isEmpty(cmd)) {
             receivedTextTv.append("----------------------\nSend : " + cmd + "\n");
-            MainUsbSerialHelper.sendCommand(cmd);
+            SeriCom.sendCommand(cmd);
         } else {
             Toast.makeText(this, "Please enter command...", Toast.LENGTH_SHORT).show();
         }
@@ -86,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
         //progressDialog.show();
         Log.d(TAG, "Activity Module Call : " + message);
 
-        MainUsbSerialHelper.setDeviceCallback(new UsbHelperListener() {
+        SeriCom.setConnectionChangeListener(new OnConnectionStateChangeListener() {
             @Override
             public void onDeviceConnect() {
                 Log.d(TAG, "Activity : Device Connected...");

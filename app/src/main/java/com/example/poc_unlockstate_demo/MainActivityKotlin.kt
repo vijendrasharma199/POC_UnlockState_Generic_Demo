@@ -7,9 +7,9 @@ import android.text.method.ScrollingMovementMethod
 import android.util.Log
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.example.devicedetect.MainUsbSerialHelper
-import com.example.devicedetect.interfaces.UsbHelperListener
 import com.example.poc_unlockstate_demo.databinding.ActivityMainKotlinBinding
+import `in`.sunfox.healthcare.commons.android.sericom.SeriCom
+import `in`.sunfox.healthcare.commons.android.sericom.interfaces.OnConnectionStateChangeListener
 
 class MainActivityKotlin : AppCompatActivity() {
 
@@ -58,13 +58,13 @@ class MainActivityKotlin : AppCompatActivity() {
             binding.receivedTextTv.append("----------------------\nSend : $cmd\n")
             if (time.isNotEmpty()) {
                 val thread = Thread {
-                    MainUsbSerialHelper.sendCommand("1")
+                    SeriCom.sendCommand("1")
                     Thread.sleep(time.toInt() * 1000L)
-                    MainUsbSerialHelper.sendCommand("0")
+                    SeriCom.sendCommand("0")
                 }
                 thread.start()
             } else {
-                MainUsbSerialHelper.sendCommand(cmd)
+                SeriCom.sendCommand(cmd)
             }
         } else {
             showToast("Please enter command...")
@@ -76,9 +76,8 @@ class MainActivityKotlin : AppCompatActivity() {
     private fun useModule(message: String) {
         arraylist.clear()
 
-        //MainUsbSerialHelper.applyDelimiter("Q")
-        MainUsbSerialHelper.setDeviceCallback(object :
-            UsbHelperListener {
+        SeriCom.setDelimiter("Q")
+        SeriCom.setConnectionChangeListener(object : OnConnectionStateChangeListener {
             override fun onDeviceConnect() {
                 Log.d(TAG, "Activity : Device Connected...")
                 runOnUiThread {

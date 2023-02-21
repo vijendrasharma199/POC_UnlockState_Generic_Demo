@@ -1,12 +1,12 @@
-package com.example.devicedetect
+package `in`.sunfox.healthcare.commons.android.sericom
 
 import android.text.SpannableStringBuilder
 import android.util.Log
-import com.example.devicedetect.Util.SpandanResponseDecoder
-import com.example.devicedetect.interfaces.DataFilterInterface
+import `in`.sunfox.healthcare.commons.android.sericom.Util.SpandanResponseDecoder
+import `in`.sunfox.healthcare.commons.android.sericom.interfaces.DataFilterInterface
 
-internal object UsbDataFiltering : DataFilterInterface {
-    var TAG = "USB_DATA_FILTERING"
+internal object SeriComDataFiltering : DataFilterInterface {
+    var TAG = javaClass.simpleName
 
     private var counter: Int = 0
     private var stringBuilder = StringBuilder()
@@ -23,7 +23,7 @@ internal object UsbDataFiltering : DataFilterInterface {
         if (data.isNotEmpty()) spn.append(String(data))
 
         //get Current Command
-        val currentCommand = MainUsbSerialHelper.currentCommand
+        val currentCommand = SeriCom.currentCommand
 
         if (currentCommand.contains("RTU")) {
             /*stringBuilder.append(spn)
@@ -91,7 +91,7 @@ internal object UsbDataFiltering : DataFilterInterface {
                 )
 
                 //set data to user
-                MainUsbSerialHelper.receivedData(
+                SeriCom.receivedData(
                     "$startResponse\n${decodeData(deviceId)}\n${
                         decodeData(
                             microControllerId
@@ -174,7 +174,7 @@ internal object UsbDataFiltering : DataFilterInterface {
                 }
             }*/
 
-            MainUsbSerialHelper.receivedData(spn.toString())
+            SeriCom.receivedData(spn.toString())
         }
 
         /*
@@ -213,14 +213,14 @@ internal object UsbDataFiltering : DataFilterInterface {
         for (i in start until end) {
             val time = ++counter
             Log.w(TAG, "returnDataToUser: Data ${result[i]} \tCounter : $time")
-            MainUsbSerialHelper.receivedData(result[i])
+            SeriCom.receivedData(result[i])
         }
     }
 
     override fun decodeData(input: String): String {
         //get input key from command
-        val inputKey = if (MainUsbSerialHelper.currentCommand.contains("RTU")) {
-            MainUsbSerialHelper.currentCommand.replace("RTU", "")
+        val inputKey = if (SeriCom.currentCommand.contains("RTU")) {
+            SeriCom.currentCommand.replace("RTU", "")
         } else ""
         return SpandanResponseDecoder(inputKey).decode(input)
     }
